@@ -1,0 +1,37 @@
+# Gate a provider upgrade on a pull request.
+#
+# Drop this in .github/workflows/provider-upgrade.yml. The checklist lands on
+# the job summary page; the job fails while any breaking change still applies.
+name: provider-upgrade
+
+on:
+  pull_request:
+    paths:
+      - "**.tf"
+
+permissions:
+  contents: read
+
+jobs:
+  advise:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - id: advisor
+        uses: moveeeax/tf-upgrade-advisor@v0
+        with:
+          provider: aws
+          from: 5
+          to: 6
+          path: ./infra
+          # Start with `never` to take stock, then tighten to `breaking`
+          # once the list is down to items you have decided to accept.
+          fail-on: breaking
+
+      - name: Report
+        if: always()
+        env:
+          BREAKING: ${{ steps.advisor.outputs.breaking }}
+          WARNING: ${{ steps.advisor.outputs.warning }}
+        run: echo "${BREAKING} breaking, ${WARNING} warning"

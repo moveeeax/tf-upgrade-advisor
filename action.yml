@@ -1,0 +1,92 @@
+name: tf-upgrade-advisor
+description: Turn a Terraform provider major upgrade into a checklist against your own HCL.
+branding:
+  icon: check-square
+  color: purple
+
+inputs:
+  provider:
+    description: Provider to check. Only `aws` is covered today.
+    required: false
+    default: aws
+  from:
+    description: Major version the configuration is on.
+    required: true
+  to:
+    description: Major version to upgrade to.
+    required: true
+  path:
+    description: Directory to scan. Local modules are followed from here.
+    required: false
+    default: "."
+  fail-on:
+    description: "Lowest severity that fails the job: breaking, warning, info or never."
+    required: false
+    default: breaking
+  version:
+    description: tf-upgrade-advisor version to install (git ref).
+    required: false
+    default: latest
+  go-version:
+    description: Go toolchain used to install the CLI.
+    required: false
+    default: stable
+
+outputs:
+  breaking:
+    description: Number of breaking findings.
+    value: ${{ steps.scan.outputs.breaking }}
+  warning:
+    description: Number of warning findings.
+    value: ${{ steps.scan.outputs.warning }}
+  info:
+    description: Number of informational findings.
+    value: ${{ steps.scan.outputs.info }}
+  total:
+    description: Total findings.
+    value: ${{ steps.scan.outputs.total }}
+  has-breaking:
+    description: "`true` when at least one breaking change applies."
+    value: ${{ steps.scan.outputs.has-breaking }}
+  report-file:
+    description: Path to the rendered Markdown checklist.
+    value: ${{ steps.scan.outputs.report-file }}
+
+runs:
+  using: composite
+  steps:
+    - name: Set up Go
+      uses: actions/setup-go@v5
+      with:
+        go-version: ${{ inputs.go-version }}
+
+    - name: Install tf-upgrade-advisor
+      shell: bash
+      env:
+        VERSION: ${{ inputs.version }}
+      run: go install "github.com/moveeeax/tf-upgrade-advisor@${VERSION}"
+
+    # Inputs travel through the environment rather than being interpolated into
+    # the script, so a value containing shell metacharacters cannot run as code.
+    - name: Scan
+      id: scan
+      shell: bash
+      env:
+        PROVIDER: ${{ inputs.provider }}
+        FROM: ${{ inputs.from }}
+        TO: ${{ inputs.to }}
+        SCAN_PATH: ${{ inputs.path }}
+        FAIL_ON: ${{ inputs.fail-on }}
+      run: |
+        set -euo pipefail
+        report="${RUNNER_TEMP}/tf-upgrade-advisor.md"
+        echo "report-file=${report}" >> "${GITHUB_OUTPUT}"
+        # The CLI appends its counts to $GITHUB_OUTPUT and the checklist to
+        # $GITHUB_STEP_SUMMARY itself, and exits 1 when --fail-on is met.
+        "$(go env GOPATH)/bin/tf-upgrade-advisor" scan \
+          --provider "${PROVIDER}" \
+          --from "${FROM}" \
+          --to "${TO}" \
+          --fail-on "${FAIL_ON}" \
+          --output "${report}" \
+          "${SCAN_PATH}"

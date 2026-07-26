@@ -1,0 +1,77 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        go-version: ["1.22", "1.23"]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: ${{ matrix.go-version }}
+
+      - name: Verify formatting
+        run: test -z "$(gofmt -l .)"
+
+      - name: Vet
+        run: go vet ./...
+
+      - name: Test
+        run: go test -race ./...
+
+      - name: Build
+        run: go build -o /tmp/tf-upgrade-advisor .
+
+      - name: Smoke-test (a 5.x configuration fails the gate)
+        run: |
+          set +e
+          out=$(/tmp/tf-upgrade-advisor scan --provider aws --from 5 --to 6 --format text testdata/aws5)
+          code=$?
+          set -e
+          echo "$out"
+          [ "$code" = "1" ] || { echo "expected exit 1, got $code"; exit 1; }
+          echo "$out" | grep -q 'main.tf:21: breaking: aws_eip.nat.vpc'
+          echo "$out" | grep -q 'modules/network/main.tf:3: breaking: aws_ssm_association.patch.instance_id'
+
+      - name: Smoke-test (an upgraded configuration passes the gate)
+        run: |
+          /tmp/tf-upgrade-advisor scan --from 5 --to 6 testdata/clean
+          /tmp/tf-upgrade-advisor rules | grep -q 'aws 5 -> 6'
+
+      - name: Smoke-test (an uncovered step is an error, not a clean bill of health)
+        run: |
+          if /tmp/tf-upgrade-advisor scan --provider azurerm --from 3 --to 4 testdata/clean; then
+            echo "expected a failure for an uncovered provider"; exit 1
+          fi
+
+      - name: action.yml outputs match the CLI
+        run: |
+          raw=$(mktemp); emitted=$(mktemp); declared=$(mktemp)
+          GITHUB_OUTPUT="$raw" /tmp/tf-upgrade-advisor scan \
+            --from 5 --to 6 --format text --fail-on never testdata/aws5 > /dev/null
+          cut -d= -f1 "$raw" | sort -u > "$emitted"
+          # report-file is set by the composite step itself, not by the CLI.
+          grep -o 'steps\.scan\.outputs\.[a-z-]*' action.yml \
+            | sed 's/.*outputs\.//' | grep -v '^report-file$' | sort -u > "$declared"
+          missing=$(comm -23 "$declared" "$emitted")
+          if [ -n "$missing" ]; then
+            echo "action.yml declares outputs the CLI never emits:"; echo "$missing"; exit 1
+          fi
+
+      - name: Fixtures are canonically formatted HCL
+        run: |
+          if command -v terraform >/dev/null; then
+            terraform fmt -check -recursive testdata
+          else
+            echo "terraform not on this runner; skipping fmt check"
+          fi
