@@ -1,0 +1,7 @@
+/tf-upgrade-advisor
+/dist/
+*.test
+*.out
+coverage.txt
+report.md
+report.json
