@@ -1,0 +1,661 @@
+# Breaking changes for the hashicorp/aws provider, 4.x -> 5.x.
+#
+# Transcribed by hand from the official upgrade guide. Coverage is deliberately
+# focused on removals and renames that a scanner can prove from configuration
+# alone; sections about behaviour that only shows up at plan time (for example
+# `snapshot_identifier` now forcing replacement) are recorded as warnings on the
+# resource rather than as false-precision attribute hits.
+provider: aws
+from: 4
+to: 5
+guide_url: https://registry.terraform.io/providers/hashicorp/aws/latest/docs/guides/version-5-upgrade
+
+rules:
+  # --- provider block ------------------------------------------------------
+  - id: aws5-provider-assume-role-duration-seconds
+    kind: renamed
+    severity: breaking
+    match:
+      block_kind: provider
+      type: aws
+      attributes: [assume_role.duration_seconds, assume_role_with_web_identity.duration_seconds]
+    title: "provider: `duration_seconds` removed from assume-role blocks"
+    detail: Use `duration` with a Go duration string, e.g. `"1h"`.
+    guide_anchor: "#provider-arguments"
+    suggested_diff: |2
+      -    duration_seconds = 3600
+      +    duration         = "1h"
+  - id: aws5-provider-s3-force-path-style
+    kind: renamed
+    severity: breaking
+    match:
+      block_kind: provider
+      type: aws
+      attributes: [s3_force_path_style]
+    title: "provider: `s3_force_path_style` removed"
+    detail: Use `s3_use_path_style`.
+    guide_anchor: "#provider-arguments"
+    suggested_diff: |2
+      -  s3_force_path_style = true
+      +  s3_use_path_style   = true
+  - id: aws5-provider-shared-credentials-file
+    kind: renamed
+    severity: breaking
+    match:
+      block_kind: provider
+      type: aws
+      attributes: [shared_credentials_file]
+    title: "provider: `shared_credentials_file` removed"
+    detail: Use `shared_credentials_files`, which takes a list.
+    guide_anchor: "#provider-arguments"
+    suggested_diff: |2
+      -  shared_credentials_file  = "~/.aws/credentials"
+      +  shared_credentials_files = ["~/.aws/credentials"]
+  - id: aws5-provider-skip-get-ec2-platforms
+    kind: removed
+    severity: breaking
+    match:
+      block_kind: provider
+      type: aws
+      attributes: [skip_get_ec2_platforms]
+    title: "provider: `skip_get_ec2_platforms` removed"
+    detail: Removed with the EC2-Classic retirement.
+    guide_anchor: "#provider-arguments"
+
+  # --- EC2-Classic retirement: resources removed ---------------------------
+  - id: aws5-db-security-group-removed
+    kind: removed
+    severity: breaking
+    match: {block_kind: resource, type: aws_db_security_group}
+    title: "`aws_db_security_group` removed"
+    detail: Removed with the EC2-Classic retirement. Use VPC security groups.
+    guide_anchor: "#ec2-classic-retirement"
+  - id: aws5-elasticache-security-group-removed
+    kind: removed
+    severity: breaking
+    match: {block_kind: resource, type: aws_elasticache_security_group}
+    title: "`aws_elasticache_security_group` removed"
+    detail: Removed with the EC2-Classic retirement. Use VPC security groups.
+    guide_anchor: "#ec2-classic-retirement"
+  - id: aws5-redshift-security-group-removed
+    kind: removed
+    severity: breaking
+    match: {block_kind: resource, type: aws_redshift_security_group}
+    title: "`aws_redshift_security_group` removed"
+    detail: Removed with the EC2-Classic retirement. Use VPC security groups.
+    guide_anchor: "#ec2-classic-retirement"
+  - id: aws5-macie-member-account-association-removed
+    kind: removed
+    severity: breaking
+    match: {block_kind: resource, type: aws_macie_member_account_association}
+    title: "`aws_macie_member_account_association` removed"
+    detail: Removed with the Macie Classic retirement.
+    guide_anchor: "#macie-classic-retirement"
+  - id: aws5-macie-s3-bucket-association-removed
+    kind: removed
+    severity: breaking
+    match: {block_kind: resource, type: aws_macie_s3_bucket_association}
+    title: "`aws_macie_s3_bucket_association` removed"
+    detail: Removed with the Macie Classic retirement.
+    guide_anchor: "#macie-classic-retirement"
+  - id: aws5-data-subnet-ids-removed
+    kind: removed
+    severity: breaking
+    match: {block_kind: data, type: aws_subnet_ids}
+    title: "data `aws_subnet_ids` removed"
+    detail: Use the `aws_subnets` data source.
+    guide_anchor: "#data-sourceaws_subnet_ids"
+
+  # --- EC2-Classic retirement: arguments removed ---------------------------
+  - id: aws5-classiclink-vpc
+    kind: removed
+    severity: breaking
+    match:
+      block_kind: resource
+      type: aws_vpc
+      attributes: [enable_classiclink, enable_classiclink_dns_support]
+    title: "`aws_vpc`: ClassicLink arguments removed"
+    detail: Removed with the EC2-Classic retirement.
+    guide_anchor: "#resourceaws_vpc"
+  - id: aws5-classiclink-default-vpc
+    kind: removed
+    severity: breaking
+    match:
+      block_kind: resource
+      type: aws_default_vpc
+      attributes: [enable_classiclink, enable_classiclink_dns_support]
+    title: "`aws_default_vpc`: ClassicLink arguments removed"
+    detail: Removed with the EC2-Classic retirement.
+    guide_anchor: "#resourceaws_default_vpc"
+  - id: aws5-classiclink-peering-connection
+    kind: removed
+    severity: breaking
+    match:
+      block_kind: resource
+      type: aws_vpc_peering_connection
+      attributes: [allow_classic_link_to_remote_vpc, allow_vpc_to_remote_classic_link, accepter.allow_classic_link_to_remote_vpc, accepter.allow_vpc_to_remote_classic_link, requester.allow_classic_link_to_remote_vpc, requester.allow_vpc_to_remote_classic_link]
+    title: "`aws_vpc_peering_connection`: ClassicLink arguments removed"
+    detail: Removed with the EC2-Classic retirement.
+    guide_anchor: "#resourceaws_vpc_peering_connection"
+  - id: aws5-classiclink-peering-connection-accepter
+    kind: removed
+    severity: breaking
+    match:
+      block_kind: resource
+      type: aws_vpc_peering_connection_accepter
+      attributes: [allow_classic_link_to_remote_vpc, allow_vpc_to_remote_classic_link, accepter.allow_classic_link_to_remote_vpc, accepter.allow_vpc_to_remote_classic_link, requester.allow_classic_link_to_remote_vpc, requester.allow_vpc_to_remote_classic_link]
+    title: "`aws_vpc_peering_connection_accepter`: ClassicLink arguments removed"
+    detail: Removed with the EC2-Classic retirement.
+    guide_anchor: "#resourceaws_vpc_peering_connection_accepter"
+  - id: aws5-classiclink-peering-connection-options
+    kind: removed
+    severity: breaking
+    match:
+      block_kind: resource
+      type: aws_vpc_peering_connection_options
+      attributes: [allow_classic_link_to_remote_vpc, allow_vpc_to_remote_classic_link, accepter.allow_classic_link_to_remote_vpc, accepter.allow_vpc_to_remote_classic_link, requester.allow_classic_link_to_remote_vpc, requester.allow_vpc_to_remote_classic_link]
+    title: "`aws_vpc_peering_connection_options`: ClassicLink arguments removed"
+    detail: Removed with the EC2-Classic retirement.
+    guide_anchor: "#resourceaws_vpc_peering_connection_options"
+  - id: aws5-classiclink-launch-configuration
+    kind: removed
+    severity: breaking
+    match:
+      block_kind: resource
+      type: aws_launch_configuration
+      attributes: [vpc_classic_link_id, vpc_classic_link_security_groups]
+    title: "`aws_launch_configuration`: ClassicLink arguments removed"
+    detail: Removed with the EC2-Classic retirement.
+    guide_anchor: "#resourceaws_launch_configuration"
+  - id: aws5-db-instance-security-group-names
+    kind: removed
+    severity: breaking
+    match:
+      block_kind: resource
+      type: aws_db_instance
+      attributes: [security_group_names, db_security_groups]
+    title: "`aws_db_instance`: EC2-Classic security group arguments removed"
+    detail: Removed with the EC2-Classic retirement. Use `vpc_security_group_ids`.
+    guide_anchor: "#remove-db_security_groups"
+  - id: aws5-elasticache-cluster-security-group-names
+    kind: removed
+    severity: breaking
+    match:
+      block_kind: resource
+      type: aws_elasticache_cluster
+      attributes: [security_group_names]
+    title: "`aws_elasticache_cluster`: `security_group_names` removed"
+    detail: Removed with the EC2-Classic retirement. Use `security_group_ids`.
+    guide_anchor: "#resourceaws_elasticache_cluster"
+  - id: aws5-redshift-cluster-security-groups
+    kind: removed
+    severity: breaking
+    match:
+      block_kind: resource
+      type: aws_redshift_cluster
+      attributes: [cluster_security_groups]
+    title: "`aws_redshift_cluster`: `cluster_security_groups` removed"
+    detail: Removed with the EC2-Classic retirement. Use `vpc_security_group_ids`.
+    guide_anchor: "#resourceaws_redshift_cluster"
+
+  # --- renames and removals -------------------------------------------------
+  - id: aws5-acmpca-certificate-authority-status
+    kind: removed
+    severity: breaking
+    match:
+      block_kind: resource
+      type: aws_acmpca_certificate_authority
+      attributes: [status]
+    title: "`aws_acmpca_certificate_authority`: `status` removed"
+    guide_anchor: "#resourceaws_acmpca_certificate_authority"
+  - id: aws5-autoscaling-attachment-alb-target-group-arn
+    kind: renamed
+    severity: breaking
+    match:
+      block_kind: resource
+      type: aws_autoscaling_attachment
+      attributes: [alb_target_group_arn]
+    title: "`aws_autoscaling_attachment`: `alb_target_group_arn` renamed to `lb_target_group_arn`"
+    guide_anchor: "#resourceaws_autoscaling_attachment"
+    suggested_diff: |2
+      -  alb_target_group_arn = aws_lb_target_group.example.arn
+      +  lb_target_group_arn  = aws_lb_target_group.example.arn
+  - id: aws5-autoscaling-group-tags
+    kind: removed
+    severity: breaking
+    match:
+      block_kind: resource
+      type: aws_autoscaling_group
+      attributes: [tags]
+    title: "`aws_autoscaling_group`: `tags` removed"
+    detail: Use `tag` blocks; for dynamic tags see the dynamic-tagging example in the resource docs.
+    guide_anchor: "#resourceaws_autoscaling_group"
+  - id: aws5-budgets-budget-cost-filters
+    kind: removed
+    severity: breaking
+    match:
+      block_kind: resource
+      type: aws_budgets_budget
+      attributes: [cost_filters]
+    title: "`aws_budgets_budget`: `cost_filters` removed"
+    detail: Use `cost_filter` blocks.
+    guide_anchor: "#resourceaws_budgets_budget"
+  - id: aws5-ce-anomaly-subscription-threshold
+    kind: removed
+    severity: breaking
+    match:
+      block_kind: resource
+      type: aws_ce_anomaly_subscription
+      attributes: [threshold]
+    title: "`aws_ce_anomaly_subscription`: `threshold` removed"
+    detail: Use `threshold_expression`.
+    guide_anchor: "#resourceaws_ce_anomaly_subscription"
+  - id: aws5-codebuild-project-source-auth
+    kind: removed
+    severity: breaking
+    match:
+      block_kind: resource
+      type: aws_codebuild_project
+      attributes: [source.auth, secondary_sources.auth]
+    title: "`aws_codebuild_project`: `source.auth` / `secondary_sources.auth` removed"
+    detail: Use the `aws_codebuild_source_credential` resource.
+    guide_anchor: "#resourceaws_codebuild_project"
+  - id: aws5-connect-hours-of-operation-arn
+    kind: removed
+    severity: breaking
+    match:
+      block_kind: resource
+      type: aws_connect_hours_of_operation
+      attributes: [hours_of_operation_arn]
+    title: "`aws_connect_hours_of_operation`: `hours_of_operation_arn` removed"
+    guide_anchor: "#resourceaws_connect_hours_of_operation"
+  - id: aws5-connect-queue-quick-connect-ids-associated
+    kind: removed
+    severity: breaking
+    match:
+      block_kind: resource
+      type: aws_connect_queue
+      attributes: [quick_connect_ids_associated]
+    title: "`aws_connect_queue`: `quick_connect_ids_associated` removed"
+    guide_anchor: "#resourceaws_connect_queue"
+  - id: aws5-connect-routing-profile-queue-configs-associated
+    kind: removed
+    severity: breaking
+    match:
+      block_kind: resource
+      type: aws_connect_routing_profile
+      attributes: [queue_configs_associated]
+    title: "`aws_connect_routing_profile`: `queue_configs_associated` removed"
+    guide_anchor: "#resourceaws_connect_routing_profile"
+  - id: aws5-db-instance-name
+    kind: renamed
+    severity: breaking
+    match:
+      block_kind: resource
+      type: aws_db_instance
+      attributes: [name]
+    title: "`aws_db_instance`: `name` renamed to `db_name`"
+    guide_anchor: "#use-db_name-instead-of-name"
+    suggested_diff: |2
+      -  name    = "app"
+      +  db_name = "app"
+  - id: aws5-db-instance-id-semantics
+    kind: state-move
+    severity: warning
+    match: {block_kind: resource, type: aws_db_instance}
+    title: "`aws_db_instance`: `id` is now the DBI resource ID, not the DB identifier"
+    detail: >-
+      Any reference that expects the DB identifier — `replicate_source_db`,
+      `db_instance_identifier` on role associations, proxy targets and snapshots,
+      `source_ids` on event subscriptions — must switch from `.id` to `.identifier`.
+    guide_anchor: "#aws_db_instanceid-is-no-longer-the-identifier"
+    suggested_diff: |2
+      -  replicate_source_db = aws_db_instance.source.id
+      +  replicate_source_db = aws_db_instance.source.identifier
+  - id: aws5-dms-endpoint-ignore-headers-row
+    kind: removed
+    severity: breaking
+    match:
+      block_kind: resource
+      type: aws_dms_endpoint
+      attributes: [s3_settings.ignore_headers_row]
+    title: "`aws_dms_endpoint`: `s3_settings.ignore_headers_row` removed"
+    detail: Not to be confused with `ignore_header_rows`, which still exists.
+    guide_anchor: "#resourceaws_dms_endpoint"
+  - id: aws5-ecs-cluster-capacity-providers
+    kind: removed
+    severity: breaking
+    match:
+      block_kind: resource
+      type: aws_ecs_cluster
+      attributes: [capacity_providers, default_capacity_provider_strategy]
+    title: "`aws_ecs_cluster`: `capacity_providers` / `default_capacity_provider_strategy` removed"
+    detail: Use the `aws_ecs_cluster_capacity_providers` resource.
+    guide_anchor: "#resourceaws_ecs_cluster"
+  - id: aws5-eip-vpc-deprecated
+    kind: deprecated
+    severity: warning
+    match:
+      block_kind: resource
+      type: aws_eip
+      attributes: [vpc]
+    title: "`aws_eip`: `vpc` deprecated in favour of `domain`"
+    detail: Removed outright in 6.0.0, so fix it now.
+    guide_anchor: "#resourceaws_eip"
+    suggested_diff: |2
+      -  vpc    = true
+      +  domain = "vpc"
+  - id: aws5-eks-addon-resolve-conflicts-deprecated
+    kind: deprecated
+    severity: warning
+    match:
+      block_kind: resource
+      type: aws_eks_addon
+      attributes: [resolve_conflicts]
+    title: "`aws_eks_addon`: `resolve_conflicts` deprecated"
+    detail: Use `resolve_conflicts_on_create` / `resolve_conflicts_on_update`. Removed in 6.0.0.
+    guide_anchor: "#resourceaws_eks_addon"
+  - id: aws5-elasticache-replication-group-cluster-mode
+    kind: removed
+    severity: breaking
+    match:
+      block_kind: resource
+      type: aws_elasticache_replication_group
+      attributes: [cluster_mode]
+    title: "`aws_elasticache_replication_group`: `cluster_mode` block removed"
+    detail: Use top-level `num_node_groups` and `replicas_per_node_group`.
+    guide_anchor: "#resourceaws_elasticache_replication_group"
+    suggested_diff: |2
+      -  cluster_mode {
+      -    num_node_groups         = 2
+      -    replicas_per_node_group = 1
+      -  }
+      +  num_node_groups         = 2
+      +  replicas_per_node_group = 1
+  - id: aws5-elasticache-replication-group-renames
+    kind: renamed
+    severity: breaking
+    match:
+      block_kind: resource
+      type: aws_elasticache_replication_group
+      attributes: [availability_zones, number_cache_clusters, replication_group_description]
+    title: "`aws_elasticache_replication_group`: three arguments renamed"
+    detail: >-
+      `availability_zones` -> `preferred_cache_cluster_azs`,
+      `number_cache_clusters` -> `num_cache_clusters`,
+      `replication_group_description` -> `description`.
+    guide_anchor: "#resourceaws_elasticache_replication_group"
+  - id: aws5-flow-log-log-group-name-deprecated
+    kind: deprecated
+    severity: warning
+    match:
+      block_kind: resource
+      type: aws_flow_log
+      attributes: [log_group_name]
+    title: "`aws_flow_log`: `log_group_name` deprecated"
+    detail: Use `log_destination`. Removed outright in 6.0.0.
+    guide_anchor: "#resourceaws_flow_log"
+  - id: aws5-guardduty-org-config-auto-enable-deprecated
+    kind: deprecated
+    severity: warning
+    match:
+      block_kind: resource
+      type: aws_guardduty_organization_configuration
+      attributes: [auto_enable]
+    title: "`aws_guardduty_organization_configuration`: `auto_enable` deprecated"
+    detail: Use `auto_enable_organization_members`. Removed in 6.0.0.
+    guide_anchor: "#resourceaws_guardduty_organization_configuration"
+  - id: aws5-kinesis-firehose-s3-configuration
+    kind: removed
+    severity: breaking
+    match:
+      block_kind: resource
+      type: aws_kinesis_firehose_delivery_stream
+      attributes: [s3_configuration]
+    title: "`aws_kinesis_firehose_delivery_stream`: top-level `s3_configuration` removed"
+    detail: >-
+      `s3_configuration` now lives inside `elasticsearch_configuration`,
+      `opensearch_configuration`, `redshift_configuration`,
+      `splunk_configuration` or `http_endpoint_configuration`. `destination = "s3"`
+      is gone too; use `extended_s3`.
+    guide_anchor: "#resourceaws_kinesis_firehose_delivery_stream"
+  - id: aws5-kinesis-firehose-buffer-renames
+    kind: renamed
+    severity: breaking
+    match:
+      block_kind: resource
+      type: aws_kinesis_firehose_delivery_stream
+      attributes:
+        - s3_configuration.buffer_size
+        - s3_configuration.buffer_interval
+        - extended_s3_configuration.s3_backup_configuration.buffer_size
+        - extended_s3_configuration.s3_backup_configuration.buffer_interval
+        - redshift_configuration.s3_backup_configuration.buffer_size
+        - redshift_configuration.s3_backup_configuration.buffer_interval
+    title: "`aws_kinesis_firehose_delivery_stream`: `buffer_*` renamed to `buffering_*`"
+    guide_anchor: "#resourceaws_kinesis_firehose_delivery_stream"
+    suggested_diff: |2
+      -    buffer_size      = 5
+      -    buffer_interval  = 300
+      +    buffering_size     = 5
+      +    buffering_interval = 300
+  - id: aws5-lightsail-instance-ipv6-address
+    kind: removed
+    severity: breaking
+    match:
+      block_kind: resource
+      type: aws_lightsail_instance
+      attributes: [ipv6_address]
+    title: "`aws_lightsail_instance`: `ipv6_address` removed"
+    detail: Use `ipv6_addresses`.
+    guide_anchor: "#resourceaws_lightsail_instance"
+  - id: aws5-medialive-multiplex-program-statemux
+    kind: renamed
+    severity: breaking
+    match:
+      block_kind: resource
+      type: aws_medialive_multiplex_program
+      attributes: [multiplex_program_settings.video_settings.statemux_settings]
+    title: "`aws_medialive_multiplex_program`: `statemux_settings` renamed to `statmux_settings`"
+    guide_anchor: "#resourceaws_medialive_multiplex_program"
+  - id: aws5-msk-cluster-ebs-volume-size
+    kind: removed
+    severity: breaking
+    match:
+      block_kind: resource
+      type: aws_msk_cluster
+      attributes: [broker_node_group_info.ebs_volume_size]
+    title: "`aws_msk_cluster`: `broker_node_group_info.ebs_volume_size` removed"
+    detail: Use `broker_node_group_info.storage_info.ebs_storage_info.volume_size`.
+    guide_anchor: "#resourceaws_msk_cluster"
+  - id: aws5-networkmanager-core-network-policy-document
+    kind: removed
+    severity: breaking
+    match:
+      block_kind: resource
+      type: aws_networkmanager_core_network
+      attributes: [policy_document]
+    title: "`aws_networkmanager_core_network`: `policy_document` removed"
+    detail: Use the `aws_networkmanager_core_network_policy_attachment` resource.
+    guide_anchor: "#resourceaws_networkmanager_core_network"
+  - id: aws5-rds-cluster-engine-required
+    kind: required
+    severity: breaking
+    match:
+      block_kind: resource
+      type: aws_rds_cluster
+      attributes: [engine]
+      absent: true
+    title: "`aws_rds_cluster`: `engine` is now required"
+    detail: Omitting it used to mean `aurora` (MySQL 5.6 compatible). There is no default now.
+    guide_anchor: "#resourceaws_rds_cluster"
+    suggested_diff: |2
+      +  engine = "aurora-mysql"
+  - id: aws5-rds-cluster-instance-engine-required
+    kind: required
+    severity: breaking
+    match:
+      block_kind: resource
+      type: aws_rds_cluster_instance
+      attributes: [engine]
+      absent: true
+    title: "`aws_rds_cluster_instance`: `engine` is now required"
+    guide_anchor: "#resourceaws_rds_cluster_instance"
+    suggested_diff: |2
+      +  engine = "aurora-mysql"
+  - id: aws5-route-instance-id
+    kind: removed
+    severity: breaking
+    match:
+      block_kind: resource
+      type: aws_route
+      attributes: [instance_id]
+    title: "`aws_route`: `instance_id` removed"
+    detail: Use `network_interface_id`.
+    guide_anchor: "#resourceaws_route"
+    suggested_diff: |2
+      -  instance_id          = aws_instance.example.id
+      +  network_interface_id = aws_instance.example.primary_network_interface_id
+  - id: aws5-route-table-instance-id
+    kind: removed
+    severity: breaking
+    match:
+      block_kind: resource
+      type: aws_route_table
+      attributes: [route.instance_id]
+    title: "`aws_route_table`: `route.instance_id` removed"
+    detail: Use `route.network_interface_id`.
+    guide_anchor: "#resourceaws_route_table"
+  - id: aws5-s3-object-acl-default
+    kind: default-changed
+    severity: warning
+    match:
+      block_kind: resource
+      type: aws_s3_object
+      attributes: [acl]
+      absent: true
+    title: "`aws_s3_object`: `acl` no longer defaults to `private`"
+    detail: Objects that relied on the implicit private ACL must now set it explicitly.
+    guide_anchor: "#resourceaws_s3_object"
+    suggested_diff: |2
+      +  acl = "private"
+  - id: aws5-s3-object-copy-acl-default
+    kind: default-changed
+    severity: warning
+    match:
+      block_kind: resource
+      type: aws_s3_object_copy
+      attributes: [acl]
+      absent: true
+    title: "`aws_s3_object_copy`: `acl` no longer defaults to `private`"
+    guide_anchor: "#resourceaws_s3_object_copy"
+    suggested_diff: |2
+      +  acl = "private"
+  - id: aws5-secretsmanager-secret-rotation
+    kind: removed
+    severity: breaking
+    match:
+      block_kind: resource
+      type: aws_secretsmanager_secret
+      attributes: [rotation_enabled, rotation_lambda_arn, rotation_rules]
+    title: "`aws_secretsmanager_secret`: rotation arguments removed"
+    detail: Use the `aws_secretsmanager_secret_rotation` resource.
+    guide_anchor: "#resourceaws_secretsmanager_secret"
+  - id: aws5-ssm-association-instance-id-deprecated
+    kind: deprecated
+    severity: warning
+    match:
+      block_kind: resource
+      type: aws_ssm_association
+      attributes: [instance_id]
+    title: "`aws_ssm_association`: `instance_id` deprecated"
+    detail: Use `targets`. Removed outright in 6.0.0.
+    guide_anchor: "#resourceaws_ssm_association"
+  - id: aws5-ssm-parameter-overwrite
+    kind: deprecated
+    severity: warning
+    match:
+      block_kind: resource
+      type: aws_ssm_parameter
+      attributes: [overwrite]
+    title: "`aws_ssm_parameter`: `overwrite` deprecated"
+    detail: >-
+      Import pre-existing parameters instead of relying on import-on-create. A
+      future major will fail when creating a parameter that already exists.
+    guide_anchor: "#resourceaws_ssm_parameter"
+  - id: aws5-wafv2-web-acl-excluded-rule
+    kind: removed
+    severity: breaking
+    match:
+      block_kind: resource
+      type: aws_wafv2_web_acl
+      attributes:
+        - rule.statement.managed_rule_group_statement.excluded_rule
+        - rule.statement.rule_group_reference_statement.excluded_rule
+    title: "`aws_wafv2_web_acl`: `excluded_rule` removed"
+    detail: Use `rule_action_override`.
+    guide_anchor: "#resourceaws_wafv2_web_acl"
+  - id: aws5-wafv2-logging-redacted-fields
+    kind: removed
+    severity: breaking
+    match:
+      block_kind: resource
+      type: aws_wafv2_web_acl_logging_configuration
+      attributes:
+        - redacted_fields.all_query_arguments
+        - redacted_fields.body
+        - redacted_fields.single_query_argument
+    title: "`aws_wafv2_web_acl_logging_configuration`: several `redacted_fields` sub-blocks removed"
+    guide_anchor: "#resourceaws_wafv2_web_acl_logging_configuration"
+
+  # --- data sources ---------------------------------------------------------
+  - id: aws5-data-iam-policy-document-source-json
+    kind: renamed
+    severity: breaking
+    match:
+      block_kind: data
+      type: aws_iam_policy_document
+      attributes: [source_json, override_json]
+    title: "data `aws_iam_policy_document`: `source_json` / `override_json` removed"
+    detail: Use `source_policy_documents` and `override_policy_documents`, both lists.
+    guide_anchor: "#data-sourceaws_iam_policy_document"
+    suggested_diff: |2
+      -  source_json = data.aws_iam_policy_document.base.json
+      +  source_policy_documents = [data.aws_iam_policy_document.base.json]
+  - id: aws5-data-identitystore-group-filter
+    kind: removed
+    severity: breaking
+    match:
+      block_kind: data
+      type: aws_identitystore_group
+      attributes: [filter]
+    title: "data `aws_identitystore_group`: `filter` removed"
+    guide_anchor: "#data-sourceaws_identitystore_group"
+  - id: aws5-data-identitystore-user-filter
+    kind: removed
+    severity: breaking
+    match:
+      block_kind: data
+      type: aws_identitystore_user
+      attributes: [filter]
+    title: "data `aws_identitystore_user`: `filter` removed"
+    guide_anchor: "#data-sourceaws_identitystore_user"
+  - id: aws5-data-secretsmanager-secret-rotation
+    kind: removed
+    severity: breaking
+    match:
+      block_kind: data
+      type: aws_secretsmanager_secret
+      attributes: [rotation_enabled, rotation_lambda_arn, rotation_rules]
+    title: "data `aws_secretsmanager_secret`: rotation attributes removed"
+    guide_anchor: "#data-sourceaws_secretsmanager_secret"
+  - id: aws5-data-elasticache-replication-group-renames
+    kind: renamed
+    severity: breaking
+    match:
+      block_kind: data
+      type: aws_elasticache_replication_group
+      attributes: [number_cache_clusters, replication_group_description]
+    title: "data `aws_elasticache_replication_group`: two attributes renamed"
+    detail: "`number_cache_clusters` -> `num_cache_clusters`, `replication_group_description` -> `description`."
+    guide_anchor: "#data-sourceaws_elasticache_replication_group"

@@ -1,0 +1,1203 @@
+# Breaking changes for the hashicorp/aws provider, 5.x -> 6.x.
+#
+# Every rule is transcribed by hand from the official upgrade guide; guide_anchor
+# is the heading it came from, so any claim in a report can be checked at source.
+# Nothing here is inferred, generated or summarised by a model.
+provider: aws
+from: 5
+to: 6
+guide_url: https://registry.terraform.io/providers/hashicorp/aws/latest/docs/guides/version-6-upgrade
+
+rules:
+  # --- provider block ------------------------------------------------------
+  - id: aws6-provider-endpoints-opsworks
+    kind: removed
+    severity: breaking
+    match:
+      block_kind: provider
+      type: aws
+      attributes: [endpoints.opsworks]
+    title: "provider: `endpoints.opsworks` removed"
+    detail: Removed following AWS OpsWorks Stacks end of life. Delete the override.
+    guide_anchor: "#removed-provider-arguments"
+
+  - id: aws6-provider-endpoints-simpledb
+    kind: removed
+    severity: breaking
+    match:
+      block_kind: provider
+      type: aws
+      attributes: [endpoints.simpledb, endpoints.sdb]
+    title: "provider: `endpoints.simpledb` / `endpoints.sdb` removed"
+    detail: Removed with Amazon SimpleDB support. Delete the override.
+    guide_anchor: "#removed-provider-arguments"
+
+  - id: aws6-provider-endpoints-worklink
+    kind: removed
+    severity: breaking
+    match:
+      block_kind: provider
+      type: aws
+      attributes: [endpoints.worklink]
+    title: "provider: `endpoints.worklink` removed"
+    detail: Removed with Amazon WorkLink support. Delete the override.
+    guide_anchor: "#removed-provider-arguments"
+
+  - id: aws6-provider-s3-us-east-1-regional-endpoint
+    kind: deprecated
+    severity: warning
+    match:
+      block_kind: provider
+      type: aws
+      attributes: [s3_us_east_1_regional_endpoint]
+    title: "provider: `s3_us_east_1_regional_endpoint` deprecated"
+    detail: >-
+      The global S3 endpoint is deprecated and this argument is removed in 7.0.0.
+      Drop the argument, or set it to `regional` and verify S3 access in us-east-1.
+    guide_anchor: "#s3-global-endpoint-deprecation"
+    suggested_diff: |2
+      -  s3_us_east_1_regional_endpoint = "legacy"
+      +  # removed: the global S3 endpoint is deprecated
+
+  # --- whole resources removed --------------------------------------------
+  - id: aws6-opsworks-application-removed
+    kind: removed
+    severity: breaking
+    match: {block_kind: resource, type: aws_opsworks_application}
+    title: "`aws_opsworks_application` removed"
+    detail: AWS OpsWorks Stacks reached end of life; the resource no longer exists.
+    guide_anchor: "#opsworks-stacks-removal"
+  - id: aws6-opsworks-custom-layer-removed
+    kind: removed
+    severity: breaking
+    match: {block_kind: resource, type: aws_opsworks_custom_layer}
+    title: "`aws_opsworks_custom_layer` removed"
+    detail: AWS OpsWorks Stacks reached end of life; the resource no longer exists.
+    guide_anchor: "#opsworks-stacks-removal"
+  - id: aws6-opsworks-ecs-cluster-layer-removed
+    kind: removed
+    severity: breaking
+    match: {block_kind: resource, type: aws_opsworks_ecs_cluster_layer}
+    title: "`aws_opsworks_ecs_cluster_layer` removed"
+    detail: AWS OpsWorks Stacks reached end of life; the resource no longer exists.
+    guide_anchor: "#opsworks-stacks-removal"
+  - id: aws6-opsworks-ganglia-layer-removed
+    kind: removed
+    severity: breaking
+    match: {block_kind: resource, type: aws_opsworks_ganglia_layer}
+    title: "`aws_opsworks_ganglia_layer` removed"
+    detail: AWS OpsWorks Stacks reached end of life; the resource no longer exists.
+    guide_anchor: "#opsworks-stacks-removal"
+  - id: aws6-opsworks-haproxy-layer-removed
+    kind: removed
+    severity: breaking
+    match: {block_kind: resource, type: aws_opsworks_haproxy_layer}
+    title: "`aws_opsworks_haproxy_layer` removed"
+    detail: AWS OpsWorks Stacks reached end of life; the resource no longer exists.
+    guide_anchor: "#opsworks-stacks-removal"
+  - id: aws6-opsworks-instance-removed
+    kind: removed
+    severity: breaking
+    match: {block_kind: resource, type: aws_opsworks_instance}
+    title: "`aws_opsworks_instance` removed"
+    detail: AWS OpsWorks Stacks reached end of life; the resource no longer exists.
+    guide_anchor: "#opsworks-stacks-removal"
+  - id: aws6-opsworks-java-app-layer-removed
+    kind: removed
+    severity: breaking
+    match: {block_kind: resource, type: aws_opsworks_java_app_layer}
+    title: "`aws_opsworks_java_app_layer` removed"
+    detail: AWS OpsWorks Stacks reached end of life; the resource no longer exists.
+    guide_anchor: "#opsworks-stacks-removal"
+  - id: aws6-opsworks-memcached-layer-removed
+    kind: removed
+    severity: breaking
+    match: {block_kind: resource, type: aws_opsworks_memcached_layer}
+    title: "`aws_opsworks_memcached_layer` removed"
+    detail: AWS OpsWorks Stacks reached end of life; the resource no longer exists.
+    guide_anchor: "#opsworks-stacks-removal"
+  - id: aws6-opsworks-mysql-layer-removed
+    kind: removed
+    severity: breaking
+    match: {block_kind: resource, type: aws_opsworks_mysql_layer}
+    title: "`aws_opsworks_mysql_layer` removed"
+    detail: AWS OpsWorks Stacks reached end of life; the resource no longer exists.
+    guide_anchor: "#opsworks-stacks-removal"
+  - id: aws6-opsworks-nodejs-app-layer-removed
+    kind: removed
+    severity: breaking
+    match: {block_kind: resource, type: aws_opsworks_nodejs_app_layer}
+    title: "`aws_opsworks_nodejs_app_layer` removed"
+    detail: AWS OpsWorks Stacks reached end of life; the resource no longer exists.
+    guide_anchor: "#opsworks-stacks-removal"
+  - id: aws6-opsworks-permission-removed
+    kind: removed
+    severity: breaking
+    match: {block_kind: resource, type: aws_opsworks_permission}
+    title: "`aws_opsworks_permission` removed"
+    detail: AWS OpsWorks Stacks reached end of life; the resource no longer exists.
+    guide_anchor: "#opsworks-stacks-removal"
+  - id: aws6-opsworks-php-app-layer-removed
+    kind: removed
+    severity: breaking
+    match: {block_kind: resource, type: aws_opsworks_php_app_layer}
+    title: "`aws_opsworks_php_app_layer` removed"
+    detail: AWS OpsWorks Stacks reached end of life; the resource no longer exists.
+    guide_anchor: "#opsworks-stacks-removal"
+  - id: aws6-opsworks-rails-app-layer-removed
+    kind: removed
+    severity: breaking
+    match: {block_kind: resource, type: aws_opsworks_rails_app_layer}
+    title: "`aws_opsworks_rails_app_layer` removed"
+    detail: AWS OpsWorks Stacks reached end of life; the resource no longer exists.
+    guide_anchor: "#opsworks-stacks-removal"
+  - id: aws6-opsworks-rds-db-instance-removed
+    kind: removed
+    severity: breaking
+    match: {block_kind: resource, type: aws_opsworks_rds_db_instance}
+    title: "`aws_opsworks_rds_db_instance` removed"
+    detail: AWS OpsWorks Stacks reached end of life; the resource no longer exists.
+    guide_anchor: "#opsworks-stacks-removal"
+  - id: aws6-opsworks-stack-removed
+    kind: removed
+    severity: breaking
+    match: {block_kind: resource, type: aws_opsworks_stack}
+    title: "`aws_opsworks_stack` removed"
+    detail: AWS OpsWorks Stacks reached end of life; the resource no longer exists.
+    guide_anchor: "#opsworks-stacks-removal"
+  - id: aws6-opsworks-static-web-layer-removed
+    kind: removed
+    severity: breaking
+    match: {block_kind: resource, type: aws_opsworks_static_web_layer}
+    title: "`aws_opsworks_static_web_layer` removed"
+    detail: AWS OpsWorks Stacks reached end of life; the resource no longer exists.
+    guide_anchor: "#opsworks-stacks-removal"
+  - id: aws6-opsworks-user-profile-removed
+    kind: removed
+    severity: breaking
+    match: {block_kind: resource, type: aws_opsworks_user_profile}
+    title: "`aws_opsworks_user_profile` removed"
+    detail: AWS OpsWorks Stacks reached end of life; the resource no longer exists.
+    guide_anchor: "#opsworks-stacks-removal"
+
+  - id: aws6-simpledb-domain-removed
+    kind: removed
+    severity: breaking
+    match: {block_kind: resource, type: aws_simpledb_domain}
+    title: "`aws_simpledb_domain` removed"
+    detail: The AWS SDK for Go v2 dropped Amazon SimpleDB, so the resource is gone.
+    guide_anchor: "#simpledb-support-removed"
+
+  - id: aws6-worklink-fleet-removed
+    kind: removed
+    severity: breaking
+    match: {block_kind: resource, type: aws_worklink_fleet}
+    title: "`aws_worklink_fleet` removed"
+    detail: The AWS SDK for Go v2 dropped Amazon WorkLink, so the resource is gone.
+    guide_anchor: "#worklink-support-removed"
+
+  - id: aws6-worklink-website-ca-association-removed
+    kind: removed
+    severity: breaking
+    match: {block_kind: resource, type: aws_worklink_website_certificate_authority_association}
+    title: "`aws_worklink_website_certificate_authority_association` removed"
+    detail: The AWS SDK for Go v2 dropped Amazon WorkLink, so the resource is gone.
+    guide_anchor: "#worklink-support-removed"
+
+  - id: aws6-redshift-service-account-removed
+    kind: removed
+    severity: breaking
+    match: {block_kind: resource, type: aws_redshift_service_account}
+    title: "`aws_redshift_service_account` removed"
+    detail: >-
+      AWS recommends a service principal name rather than an account ID in the
+      bucket policy used for Redshift audit logging.
+    guide_anchor: "#resource-aws_redshift_service_account"
+
+  # --- deprecated services -------------------------------------------------
+  - id: aws6-elastictranscoder-pipeline-deprecated
+    kind: deprecated
+    severity: warning
+    match: {block_kind: resource, type: aws_elastictranscoder_pipeline}
+    title: "`aws_elastictranscoder_pipeline` deprecated"
+    detail: Amazon Elastic Transcoder is discontinued. Migrate to AWS Elemental MediaConvert.
+    guide_anchor: "#amazon-elastic-transcoder-deprecation"
+  - id: aws6-elastictranscoder-preset-deprecated
+    kind: deprecated
+    severity: warning
+    match: {block_kind: resource, type: aws_elastictranscoder_preset}
+    title: "`aws_elastictranscoder_preset` deprecated"
+    detail: Amazon Elastic Transcoder is discontinued. Migrate to AWS Elemental MediaConvert.
+    guide_anchor: "#amazon-elastic-transcoder-deprecation"
+  - id: aws6-evidently-feature-deprecated
+    kind: deprecated
+    severity: warning
+    match: {block_kind: resource, type: aws_evidently_feature}
+    title: "`aws_evidently_feature` deprecated"
+    detail: CloudWatch Evidently support is ending. Migrate to AWS AppConfig feature flags.
+    guide_anchor: "#cloudwatch-evidently-deprecation"
+  - id: aws6-evidently-launch-deprecated
+    kind: deprecated
+    severity: warning
+    match: {block_kind: resource, type: aws_evidently_launch}
+    title: "`aws_evidently_launch` deprecated"
+    detail: CloudWatch Evidently support is ending. Migrate to AWS AppConfig feature flags.
+    guide_anchor: "#cloudwatch-evidently-deprecation"
+  - id: aws6-evidently-project-deprecated
+    kind: deprecated
+    severity: warning
+    match: {block_kind: resource, type: aws_evidently_project}
+    title: "`aws_evidently_project` deprecated"
+    detail: CloudWatch Evidently support is ending. Migrate to AWS AppConfig feature flags.
+    guide_anchor: "#cloudwatch-evidently-deprecation"
+  - id: aws6-evidently-segment-deprecated
+    kind: deprecated
+    severity: warning
+    match: {block_kind: resource, type: aws_evidently_segment}
+    title: "`aws_evidently_segment` deprecated"
+    detail: CloudWatch Evidently support is ending. Migrate to AWS AppConfig feature flags.
+    guide_anchor: "#cloudwatch-evidently-deprecation"
+  - id: aws6-kinesis-analytics-application-deprecated
+    kind: deprecated
+    severity: warning
+    match: {block_kind: resource, type: aws_kinesis_analytics_application}
+    title: "`aws_kinesis_analytics_application` deprecated"
+    detail: >-
+      Kinesis Data Analytics for SQL is discontinued as of 27 January 2026. Use
+      `aws_kinesisanalyticsv2_application` (Managed Service for Apache Flink).
+    guide_anchor: "#resource-aws_kinesis_analytics_application"
+  - id: aws6-media-store-container-deprecated
+    kind: deprecated
+    severity: warning
+    match: {block_kind: resource, type: aws_media_store_container}
+    title: "`aws_media_store_container` deprecated"
+    detail: AWS Elemental MediaStore is discontinued. Move to S3, or MediaPackage for packaging and DRM.
+    guide_anchor: "#resource-aws_media_store_container"
+  - id: aws6-media-store-container-policy-deprecated
+    kind: deprecated
+    severity: warning
+    match: {block_kind: resource, type: aws_media_store_container_policy}
+    title: "`aws_media_store_container_policy` deprecated"
+    detail: AWS Elemental MediaStore is discontinued. Move to S3, or MediaPackage for packaging and DRM.
+    guide_anchor: "#resource-aws_media_store_container_policy"
+  - id: aws6-data-kms-secret-deprecated
+    kind: deprecated
+    severity: warning
+    match: {block_kind: data, type: aws_kms_secret}
+    title: "data `aws_kms_secret` will be removed"
+    detail: The functionality was removed in 2.0.0; the data source itself is removed in a future version.
+    guide_anchor: "#data-source-aws_kms_secret"
+
+  # --- nullable boolean validation ----------------------------------------
+  - id: aws6-nullable-bool-accessanalyzer-archive-rule
+    kind: retyped
+    severity: warning
+    match:
+      block_kind: resource
+      type: aws_accessanalyzer_archive_rule
+      attributes: [filter.exists]
+    title: "`aws_accessanalyzer_archive_rule`: nullable boolean validation tightened"
+    detail: 'Only "", `true` or `false` are accepted now. Replace any `0` / `1` values.'
+    guide_anchor: "#nullable-boolean-validation-update"
+  - id: aws6-nullable-bool-alb-target-group
+    kind: retyped
+    severity: warning
+    match:
+      block_kind: resource
+      type: aws_alb_target_group
+      attributes: [preserve_client_ip]
+    title: "`aws_alb_target_group`: nullable boolean validation tightened"
+    detail: 'Only "", `true` or `false` are accepted now. Replace any `0` / `1` values.'
+    guide_anchor: "#nullable-boolean-validation-update"
+  - id: aws6-nullable-bool-lb-target-group
+    kind: retyped
+    severity: warning
+    match:
+      block_kind: resource
+      type: aws_lb_target_group
+      attributes: [preserve_client_ip]
+    title: "`aws_lb_target_group`: nullable boolean validation tightened"
+    detail: 'Only "", `true` or `false` are accepted now. Replace any `0` / `1` values.'
+    guide_anchor: "#nullable-boolean-validation-update"
+  - id: aws6-nullable-bool-cloudtrail-event-data-store
+    kind: retyped
+    severity: warning
+    match:
+      block_kind: resource
+      type: aws_cloudtrail_event_data_store
+      attributes: [suspend]
+    title: "`aws_cloudtrail_event_data_store`: nullable boolean validation tightened"
+    detail: 'Only "", `true` or `false` are accepted now. Replace any `0` / `1` values.'
+    guide_anchor: "#nullable-boolean-validation-update"
+  - id: aws6-nullable-bool-ec2-spot-instance-fleet
+    kind: retyped
+    severity: warning
+    match:
+      block_kind: resource
+      type: aws_ec2_spot_instance_fleet
+      attributes: [terminate_instances_on_delete]
+    title: "`aws_ec2_spot_instance_fleet`: nullable boolean validation tightened"
+    detail: 'Only "", `true` or `false` are accepted now. Replace any `0` / `1` values.'
+    guide_anchor: "#nullable-boolean-validation-update"
+  - id: aws6-nullable-bool-elasticache-cluster
+    kind: retyped
+    severity: warning
+    match:
+      block_kind: resource
+      type: aws_elasticache_cluster
+      attributes: [auto_minor_version_upgrade]
+    title: "`aws_elasticache_cluster`: nullable boolean validation tightened"
+    detail: 'Only "", `true` or `false` are accepted now. Replace any `0` / `1` values.'
+    guide_anchor: "#nullable-boolean-validation-update"
+  - id: aws6-nullable-bool-elasticache-replication-group
+    kind: retyped
+    severity: warning
+    match:
+      block_kind: resource
+      type: aws_elasticache_replication_group
+      attributes: [at_rest_encryption_enabled, auto_minor_version_upgrade]
+    title: "`aws_elasticache_replication_group`: nullable boolean validation tightened"
+    detail: 'Only "", `true` or `false` are accepted now. Replace any `0` / `1` values.'
+    guide_anchor: "#nullable-boolean-validation-update"
+  - id: aws6-nullable-bool-evidently-feature
+    kind: retyped
+    severity: warning
+    match:
+      block_kind: resource
+      type: aws_evidently_feature
+      attributes: [variations.value.bool_value]
+    title: "`aws_evidently_feature`: nullable boolean validation tightened"
+    detail: 'Only "", `true` or `false` are accepted now. Replace any `0` / `1` values.'
+    guide_anchor: "#nullable-boolean-validation-update"
+  - id: aws6-nullable-bool-imagebuilder-container-recipe
+    kind: retyped
+    severity: warning
+    match:
+      block_kind: resource
+      type: aws_imagebuilder_container_recipe
+      attributes:
+        - instance_configuration.block_device_mapping.ebs.delete_on_termination
+        - instance_configuration.block_device_mapping.ebs.encrypted
+    title: "`aws_imagebuilder_container_recipe`: nullable boolean validation tightened"
+    detail: 'Only "", `true` or `false` are accepted now. Replace any `0` / `1` values.'
+    guide_anchor: "#nullable-boolean-validation-update"
+  - id: aws6-nullable-bool-imagebuilder-image-recipe
+    kind: retyped
+    severity: warning
+    match:
+      block_kind: resource
+      type: aws_imagebuilder_image_recipe
+      attributes:
+        - block_device_mapping.ebs.delete_on_termination
+        - block_device_mapping.ebs.encrypted
+    title: "`aws_imagebuilder_image_recipe`: nullable boolean validation tightened"
+    detail: 'Only "", `true` or `false` are accepted now. Replace any `0` / `1` values.'
+    guide_anchor: "#nullable-boolean-validation-update"
+  - id: aws6-nullable-bool-launch-template
+    kind: retyped
+    severity: warning
+    match:
+      block_kind: resource
+      type: aws_launch_template
+      attributes:
+        - block_device_mappings.ebs.delete_on_termination
+        - block_device_mappings.ebs.encrypted
+        - ebs_optimized
+        - network_interfaces.associate_carrier_ip_address
+        - network_interfaces.associate_public_ip_address
+        - network_interfaces.delete_on_termination
+        - network_interfaces.primary_ipv6
+    title: "`aws_launch_template`: nullable boolean validation tightened"
+    detail: 'Only "", `true` or `false` are accepted now. Replace any `0` / `1` values.'
+    guide_anchor: "#nullable-boolean-validation-update"
+  - id: aws6-nullable-bool-mq-broker
+    kind: retyped
+    severity: warning
+    match:
+      block_kind: resource
+      type: aws_mq_broker
+      attributes: [logs.audit]
+    title: "`aws_mq_broker`: nullable boolean validation tightened"
+    detail: 'Only "", `true` or `false` are accepted now. Replace any `0` / `1` values.'
+    guide_anchor: "#nullable-boolean-validation-update"
+
+  # --- data sources --------------------------------------------------------
+  - id: aws6-data-ami-most-recent
+    kind: required
+    severity: warning
+    match:
+      block_kind: data
+      type: aws_ami
+      attributes: [most_recent]
+    title: "data `aws_ami`: `most_recent = true` now needs `owners` or an identifying filter"
+    detail: >-
+      What used to be a warning is now an error. Add `owners`, or a `filter` on
+      `image-id` or `owner-id`. `allow_unsafe_filter = true` overrides the check
+      and is not recommended.
+    guide_anchor: "#data-source-aws_ami"
+    suggested_diff: |2
+         most_recent = true
+      +  owners      = ["amazon"]
+  - id: aws6-data-batch-compute-environment-name
+    kind: renamed
+    severity: breaking
+    match:
+      block_kind: data
+      type: aws_batch_compute_environment
+      attributes: [compute_environment_name]
+    title: "data `aws_batch_compute_environment`: `compute_environment_name` renamed to `name`"
+    guide_anchor: "#data-source-aws_batch_compute_environment"
+    suggested_diff: |2
+      -  compute_environment_name = "example"
+      +  name                     = "example"
+  - id: aws6-data-ecs-task-definition-inference-accelerator
+    kind: removed
+    severity: breaking
+    match:
+      block_kind: data
+      type: aws_ecs_task_definition
+      attributes: [inference_accelerator]
+    title: "data `aws_ecs_task_definition`: `inference_accelerator` removed"
+    detail: Amazon Elastic Inference reached end of life in April 2024.
+    guide_anchor: "#data-source-aws_ecs_task_definition"
+  - id: aws6-data-ecs-task-execution-inference-accelerator-overrides
+    kind: removed
+    severity: breaking
+    match:
+      block_kind: data
+      type: aws_ecs_task_execution
+      attributes: [inference_accelerator_overrides]
+    title: "data `aws_ecs_task_execution`: `inference_accelerator_overrides` removed"
+    detail: Amazon Elastic Inference reached end of life in April 2024.
+    guide_anchor: "#data-source-aws_ecs_task_execution"
+  - id: aws6-data-elbv2-listener-rule-retyped
+    kind: retyped
+    severity: warning
+    match: {block_kind: data, type: aws_elbv2_listener_rule}
+    title: "data `aws_elbv2_listener_rule`: nested attributes are now lists of blocks"
+    detail: >-
+      The configuration does not change, but references do: `action`, `condition`
+      and their nested attributes now need an index, e.g.
+      `action[0].authenticate_cognito.scope` becomes
+      `action[0].authenticate_cognito[0].scope`.
+    guide_anchor: "#data-source-aws_elbv2_listener_rule"
+  - id: aws6-data-globalaccelerator-accelerator-id
+    kind: retyped
+    severity: breaking
+    match:
+      block_kind: data
+      type: aws_globalaccelerator_accelerator
+      attributes: [id]
+    title: "data `aws_globalaccelerator_accelerator`: `id` is computed-only"
+    detail: Setting `id` is now an error. Remove it and select the accelerator another way.
+    guide_anchor: "#data-source-aws_globalaccelerator_accelerator"
+  - id: aws6-data-identitystore-group-filter
+    kind: removed
+    severity: breaking
+    match:
+      block_kind: data
+      type: aws_identitystore_group
+      attributes: [filter]
+    title: "data `aws_identitystore_group`: `filter` removed"
+    detail: Use `alternate_identifier` to locate the group.
+    guide_anchor: "#data-source-aws_identitystore_group"
+  - id: aws6-data-identitystore-user-filter
+    kind: removed
+    severity: breaking
+    match:
+      block_kind: data
+      type: aws_identitystore_user
+      attributes: [filter]
+    title: "data `aws_identitystore_user`: `filter` removed"
+    detail: Use `alternate_identifier` to locate the user.
+    guide_anchor: "#data-source-aws_identitystore_user"
+  - id: aws6-data-launch-template-elastic
+    kind: removed
+    severity: breaking
+    match:
+      block_kind: data
+      type: aws_launch_template
+      attributes: [elastic_gpu_specifications, elastic_inference_accelerator]
+    title: "data `aws_launch_template`: elastic GPU / inference arguments removed"
+    detail: Elastic Graphics ended January 2024 and Elastic Inference April 2024.
+    guide_anchor: "#data-source-aws_launch_template"
+  - id: aws6-data-opensearch-domain-kibana-endpoint
+    kind: removed
+    severity: warning
+    match: {block_kind: data, type: aws_opensearch_domain}
+    title: "data `aws_opensearch_domain`: `kibana_endpoint` removed"
+    detail: >-
+      Check every reference to this data source's `kibana_endpoint`. OpenSearch
+      Dashboards live at `/_dashboards/` on the domain endpoint.
+    guide_anchor: "#data-source-aws_opensearch_domain"
+  - id: aws6-data-opensearchserverless-security-config-retyped
+    kind: retyped
+    severity: warning
+    match: {block_kind: data, type: aws_opensearchserverless_security_config}
+    title: "data `aws_opensearchserverless_security_config`: `saml_options` is now a list of blocks"
+    detail: References need an index, e.g. `saml_options.session_timeout` becomes `saml_options[0].session_timeout`.
+    guide_anchor: "#data-source-aws_opensearchserverless_security_config"
+  - id: aws6-data-quicksight-data-set-tags-all
+    kind: removed
+    severity: warning
+    match: {block_kind: data, type: aws_quicksight_data_set}
+    title: "data `aws_quicksight_data_set`: `tags_all` removed"
+    detail: Check references to `tags_all` on this data source.
+    guide_anchor: "#data-source-aws_quicksight_data_set"
+  - id: aws6-data-region-name-deprecated
+    kind: deprecated
+    severity: warning
+    match: {block_kind: data, type: aws_region}
+    title: "data `aws_region`: `name` deprecated in favour of `region`"
+    detail: Update references from `data.aws_region.x.name` to `data.aws_region.x.region`.
+    guide_anchor: "#data-source-aws_region"
+  - id: aws6-data-s3-bucket-region
+    kind: renamed
+    severity: warning
+    match: {block_kind: data, type: aws_s3_bucket}
+    title: "data `aws_s3_bucket`: read the bucket's region from `bucket_region`"
+    detail: >-
+      `region` now selects the AWS region the data source reads from (enhanced
+      region support). References that wanted the bucket's own region must use
+      `bucket_region`.
+    guide_anchor: "#data-source-aws_s3_bucket"
+  - id: aws6-data-service-discovery-service-tags-all
+    kind: removed
+    severity: warning
+    match: {block_kind: data, type: aws_service_discovery_service}
+    title: "data `aws_service_discovery_service`: `tags_all` removed"
+    detail: Check references to `tags_all` on this data source.
+    guide_anchor: "#data-source-aws_service_discovery_service"
+  - id: aws6-data-servicequotas-templates-region
+    kind: renamed
+    severity: warning
+    match:
+      block_kind: data
+      type: aws_servicequotas_templates
+      attributes: [region]
+    title: "data `aws_servicequotas_templates`: `region` deprecated, use `aws_region`"
+    guide_anchor: "#data-source-aws_servicequotas_templates"
+    suggested_diff: |2
+      -  region     = "eu-central-1"
+      +  aws_region = "eu-central-1"
+  - id: aws6-data-ssmincidents-replication-set-region
+    kind: renamed
+    severity: warning
+    match:
+      block_kind: data
+      type: aws_ssmincidents_replication_set
+      attributes: [region]
+    title: "data `aws_ssmincidents_replication_set`: `region` deprecated, use `regions`"
+    guide_anchor: "#data-source-aws_ssmincidents_replication_set"
+  - id: aws6-data-vpc-endpoint-service-region
+    kind: renamed
+    severity: warning
+    match:
+      block_kind: data
+      type: aws_vpc_endpoint_service
+      attributes: [region]
+    title: "data `aws_vpc_endpoint_service`: `region` deprecated, use `service_region`"
+    guide_anchor: "#data-source-aws_vpc_endpoint_service"
+    suggested_diff: |2
+      -  region         = "eu-central-1"
+      +  service_region = "eu-central-1"
+  - id: aws6-data-vpc-peering-connection-region
+    kind: renamed
+    severity: warning
+    match:
+      block_kind: data
+      type: aws_vpc_peering_connection
+      attributes: [region]
+    title: "data `aws_vpc_peering_connection`: `region` deprecated, use `requester_region`"
+    guide_anchor: "#data-source-aws_vpc_peering_connection"
+
+  # --- resources -----------------------------------------------------------
+  - id: aws6-api-gateway-account-reset-on-delete
+    kind: removed
+    severity: breaking
+    match:
+      block_kind: resource
+      type: aws_api_gateway_account
+      attributes: [reset_on_delete]
+    title: "`aws_api_gateway_account`: `reset_on_delete` removed"
+    detail: >-
+      Destroy now always resets the account settings. To keep the old behaviour,
+      remove the resource from state with a `removed` block instead.
+    guide_anchor: "#resource-aws_api_gateway_account"
+  - id: aws6-api-gateway-deployment-stage
+    kind: state-move
+    severity: breaking
+    match:
+      block_kind: resource
+      type: aws_api_gateway_deployment
+      attributes: [stage_name, stage_description, canary_settings]
+    title: "`aws_api_gateway_deployment`: implicit stage arguments removed"
+    detail: >-
+      Declare the stage explicitly with `aws_api_gateway_stage` and import the
+      existing one: `terraform import aws_api_gateway_stage.prod rest_api_id/stage_name`.
+      `invoke_url` and `execution_arn` moved to the stage resource too.
+    guide_anchor: "#resource-aws_api_gateway_deployment"
+    suggested_diff: |2
+       resource "aws_api_gateway_deployment" "example" {
+         rest_api_id = aws_api_gateway_rest_api.example.id
+      -  stage_name  = "prod"
+       }
+      +
+      +resource "aws_api_gateway_stage" "prod" {
+      +  stage_name    = "prod"
+      +  rest_api_id   = aws_api_gateway_rest_api.example.id
+      +  deployment_id = aws_api_gateway_deployment.example.id
+      +}
+  - id: aws6-appflow-connector-profile-import-id
+    kind: state-move
+    severity: info
+    match: {block_kind: resource, type: aws_appflow_connector_profile}
+    title: "`aws_appflow_connector_profile`: import now uses `name`"
+    detail: Only affects import commands and any tooling that reconstructs the ID.
+    guide_anchor: "#resource-aws_appflow_connector_profile"
+  - id: aws6-appflow-flow-import-id
+    kind: state-move
+    severity: info
+    match: {block_kind: resource, type: aws_appflow_flow}
+    title: "`aws_appflow_flow`: import now uses `name`"
+    detail: Only affects import commands and any tooling that reconstructs the ID.
+    guide_anchor: "#resource-aws_appflow_flow"
+  - id: aws6-batch-compute-environment-name
+    kind: renamed
+    severity: breaking
+    match:
+      block_kind: resource
+      type: aws_batch_compute_environment
+      attributes: [compute_environment_name, compute_environment_name_prefix]
+    title: "`aws_batch_compute_environment`: `compute_environment_name*` renamed"
+    detail: "`compute_environment_name` is now `name`, `compute_environment_name_prefix` is now `name_prefix`."
+    guide_anchor: "#resource-aws_batch_compute_environment"
+    suggested_diff: |2
+      -  compute_environment_name = "example"
+      +  name                     = "example"
+  - id: aws6-batch-job-queue-compute-environments
+    kind: removed
+    severity: breaking
+    match:
+      block_kind: resource
+      type: aws_batch_job_queue
+      attributes: [compute_environments]
+    title: "`aws_batch_job_queue`: `compute_environments` removed"
+    detail: >-
+      Use `compute_environment_order` blocks. Terraform upgrades existing state
+      automatically, but the configuration has to change by hand.
+    guide_anchor: "#resource-aws_batch_job_queue"
+    suggested_diff: |2
+      -  compute_environments = [aws_batch_compute_environment.example.arn]
+      +  compute_environment_order {
+      +    compute_environment = aws_batch_compute_environment.example.arn
+      +    order               = 0
+      +  }
+  - id: aws6-bedrock-model-invocation-logging-retyped
+    kind: retyped
+    severity: warning
+    match: {block_kind: resource, type: aws_bedrock_model_invocation_logging_configuration}
+    title: "`aws_bedrock_model_invocation_logging_configuration`: nested attributes are now lists of blocks"
+    detail: >-
+      References need an index, e.g. `logging_config.cloudwatch_config.log_group_name`
+      becomes `logging_config[0].cloudwatch_config[0].log_group_name`.
+    guide_anchor: "#resource-aws_bedrock_model_invocation_logging_configuration"
+  - id: aws6-cloudformation-stack-set-instance-region
+    kind: renamed
+    severity: warning
+    match:
+      block_kind: resource
+      type: aws_cloudformation_stack_set_instance
+      attributes: [region]
+    title: "`aws_cloudformation_stack_set_instance`: `region` deprecated, use `stack_set_instance_region`"
+    detail: "`region` is now the provider-level region meta-argument."
+    guide_anchor: "#resource-aws_cloudformation_stack_set_instance"
+    suggested_diff: |2
+      -  region                    = "eu-central-1"
+      +  stack_set_instance_region = "eu-central-1"
+  - id: aws6-cloudfront-key-value-store-name
+    kind: retyped
+    severity: info
+    match: {block_kind: resource, type: aws_cloudfront_key_value_store}
+    title: "`aws_cloudfront_key_value_store`: `id` is the API ID, not the name"
+    detail: Reference the store's name through `name`.
+    guide_anchor: "#resource-aws_cloudfront_key_value_store"
+  - id: aws6-cloudfront-response-headers-policy-etag
+    kind: retyped
+    severity: breaking
+    match:
+      block_kind: resource
+      type: aws_cloudfront_response_headers_policy
+      attributes: [etag]
+    title: "`aws_cloudfront_response_headers_policy`: `etag` is computed-only"
+    detail: Remove the assignment; setting it is now an error.
+    guide_anchor: "#resource-aws_cloudfront_response_headers_policy"
+  - id: aws6-cognito-user-in-group-id
+    kind: state-move
+    severity: info
+    match: {block_kind: resource, type: aws_cognito_user_in_group}
+    title: "`aws_cognito_user_in_group`: composite `id` is now comma-delimited"
+    detail: "`user_pool_id,group_name,username`. Affects import commands and ID-parsing tooling."
+    guide_anchor: "#resource-aws_cognito_user_in_group"
+  - id: aws6-config-aggregate-authorization-region
+    kind: renamed
+    severity: warning
+    match:
+      block_kind: resource
+      type: aws_config_aggregate_authorization
+      attributes: [region]
+    title: "`aws_config_aggregate_authorization`: `region` deprecated, use `authorized_aws_region`"
+    guide_anchor: "#resource-aws_config_aggregate_authorization"
+    suggested_diff: |2
+      -  region                = "eu-central-1"
+      +  authorized_aws_region = "eu-central-1"
+  - id: aws6-cur-report-definition-s3-prefix-required
+    kind: required
+    severity: breaking
+    match:
+      block_kind: resource
+      type: aws_cur_report_definition
+      attributes: [s3_prefix]
+      absent: true
+    title: "`aws_cur_report_definition`: `s3_prefix` is now required"
+    guide_anchor: "#resource-aws_cur_report_definition"
+    suggested_diff: |2
+      +  s3_prefix = "cur/"
+  - id: aws6-db-instance-character-set-name
+    kind: retyped
+    severity: warning
+    match:
+      block_kind: resource
+      type: aws_db_instance
+      attributes: [character_set_name]
+    title: "`aws_db_instance`: `character_set_name` conflicts with restore arguments"
+    detail: >-
+      Combining `character_set_name` with `replicate_source_db`,
+      `restore_to_point_in_time`, `s3_import` or `snapshot_identifier` is no
+      longer valid.
+    guide_anchor: "#resource-aws_db_instance"
+  - id: aws6-dms-endpoint-s3-settings
+    kind: removed
+    severity: breaking
+    match:
+      block_kind: resource
+      type: aws_dms_endpoint
+      attributes: [s3_settings]
+    title: "`aws_dms_endpoint`: `s3_settings` removed"
+    detail: Use the `aws_dms_s3_endpoint` resource instead.
+    guide_anchor: "#resource-aws_dms_endpoint"
+  - id: aws6-dx-gateway-association-vpn-gateway-id
+    kind: removed
+    severity: breaking
+    match:
+      block_kind: resource
+      type: aws_dx_gateway_association
+      attributes: [vpn_gateway_id]
+    title: "`aws_dx_gateway_association`: `vpn_gateway_id` removed"
+    detail: Use `associated_gateway_id`.
+    guide_anchor: "#resource-aws_dx_gateway_association"
+    suggested_diff: |2
+      -  vpn_gateway_id        = aws_vpn_gateway.example.id
+      +  associated_gateway_id = aws_vpn_gateway.example.id
+  - id: aws6-dx-hosted-connection-region
+    kind: renamed
+    severity: warning
+    match:
+      block_kind: resource
+      type: aws_dx_hosted_connection
+      attributes: [region]
+    title: "`aws_dx_hosted_connection`: `region` deprecated, use `connection_region`"
+    guide_anchor: "#resource-aws_dx_hosted_connection"
+  - id: aws6-ecs-task-definition-inference-accelerator
+    kind: removed
+    severity: breaking
+    match:
+      block_kind: resource
+      type: aws_ecs_task_definition
+      attributes: [inference_accelerator]
+    title: "`aws_ecs_task_definition`: `inference_accelerator` removed"
+    detail: Amazon Elastic Inference reached end of life in April 2024.
+    guide_anchor: "#resource-aws_ecs_task_definition"
+  - id: aws6-eip-vpc
+    kind: removed
+    severity: breaking
+    match:
+      block_kind: resource
+      type: aws_eip
+      attributes: [vpc]
+    title: "`aws_eip`: `vpc` removed"
+    detail: Deprecated since the EC2-Classic retirement. Use `domain` instead.
+    guide_anchor: "#resource-aws_eip"
+    suggested_diff: |2
+      -  vpc    = true
+      +  domain = "vpc"
+  - id: aws6-eks-addon-resolve-conflicts
+    kind: removed
+    severity: breaking
+    match:
+      block_kind: resource
+      type: aws_eks_addon
+      attributes: [resolve_conflicts]
+    title: "`aws_eks_addon`: `resolve_conflicts` removed"
+    detail: Use `resolve_conflicts_on_create` and `resolve_conflicts_on_update`.
+    guide_anchor: "#resource-aws_eks_addon"
+    suggested_diff: |2
+      -  resolve_conflicts           = "OVERWRITE"
+      +  resolve_conflicts_on_create = "OVERWRITE"
+      +  resolve_conflicts_on_update = "OVERWRITE"
+  - id: aws6-elasticache-replication-group-auth-token-update-strategy
+    kind: default-changed
+    severity: warning
+    match:
+      block_kind: resource
+      type: aws_elasticache_replication_group
+      attributes: [auth_token]
+    title: "`aws_elasticache_replication_group`: `auth_token_update_strategy` has no default"
+    detail: When `auth_token` is set, `auth_token_update_strategy` must now be configured explicitly.
+    guide_anchor: "#resource-aws_elasticache_replication_group"
+    suggested_diff: |2
+         auth_token                 = var.auth_token
+      +  auth_token_update_strategy = "ROTATE"
+  - id: aws6-elasticache-replication-group-engine-case
+    kind: deprecated
+    severity: info
+    match:
+      block_kind: resource
+      type: aws_elasticache_replication_group
+      attributes: [engine]
+    title: "`aws_elasticache_replication_group`: uppercase `engine` deprecated"
+    detail: Only applies if the value is not entirely lowercase; 7.0.0 will reject it.
+    guide_anchor: "#resource-aws_elasticache_replication_group"
+  - id: aws6-elasticache-user-engine-case
+    kind: deprecated
+    severity: info
+    match:
+      block_kind: resource
+      type: aws_elasticache_user
+      attributes: [engine]
+    title: "`aws_elasticache_user`: uppercase `engine` deprecated"
+    detail: Only applies if the value is not entirely lowercase; 7.0.0 will reject it.
+    guide_anchor: "#resource-aws_elasticache_user"
+  - id: aws6-elasticache-user-group-engine-case
+    kind: deprecated
+    severity: info
+    match:
+      block_kind: resource
+      type: aws_elasticache_user_group
+      attributes: [engine]
+    title: "`aws_elasticache_user_group`: uppercase `engine` deprecated"
+    detail: Only applies if the value is not entirely lowercase; 7.0.0 will reject it.
+    guide_anchor: "#resource-aws_elasticache_user_group"
+  - id: aws6-flow-log-log-group-name
+    kind: removed
+    severity: breaking
+    match:
+      block_kind: resource
+      type: aws_flow_log
+      attributes: [log_group_name]
+    title: "`aws_flow_log`: `log_group_name` removed"
+    detail: Use `log_destination` with the log group ARN.
+    guide_anchor: "#resource-aws_flow_log"
+    suggested_diff: |2
+      -  log_group_name  = aws_cloudwatch_log_group.example.name
+      +  log_destination = aws_cloudwatch_log_group.example.arn
+  - id: aws6-guardduty-detector-datasources
+    kind: deprecated
+    severity: warning
+    match:
+      block_kind: resource
+      type: aws_guardduty_detector
+      attributes: [datasources]
+    title: "`aws_guardduty_detector`: `datasources` deprecated"
+    detail: Use the `aws_guardduty_detector_feature` resource instead.
+    guide_anchor: "#resource-aws_guardduty_detector"
+  - id: aws6-guardduty-org-config-auto-enable
+    kind: removed
+    severity: breaking
+    match:
+      block_kind: resource
+      type: aws_guardduty_organization_configuration
+      attributes: [auto_enable]
+    title: "`aws_guardduty_organization_configuration`: `auto_enable` removed"
+    detail: Use `auto_enable_organization_members`.
+    guide_anchor: "#resource-aws_guardduty_organization_configuration"
+    suggested_diff: |2
+      -  auto_enable                      = true
+      +  auto_enable_organization_members = "ALL"
+  - id: aws6-guardduty-org-config-auto-enable-members-required
+    kind: required
+    severity: breaking
+    match:
+      block_kind: resource
+      type: aws_guardduty_organization_configuration
+      attributes: [auto_enable_organization_members]
+      absent: true
+    title: "`aws_guardduty_organization_configuration`: `auto_enable_organization_members` is now required"
+    guide_anchor: "#resource-aws_guardduty_organization_configuration"
+  - id: aws6-guardduty-org-config-datasources
+    kind: deprecated
+    severity: warning
+    match:
+      block_kind: resource
+      type: aws_guardduty_organization_configuration
+      attributes: [datasources]
+    title: "`aws_guardduty_organization_configuration`: `datasources` deprecated"
+    guide_anchor: "#resource-aws_guardduty_organization_configuration"
+  - id: aws6-instance-cpu-core-count
+    kind: removed
+    severity: breaking
+    match:
+      block_kind: resource
+      type: aws_instance
+      attributes: [cpu_core_count, cpu_threads_per_core]
+    title: "`aws_instance`: `cpu_core_count` / `cpu_threads_per_core` removed"
+    detail: Use the `cpu_options` block with `core_count` and `threads_per_core`.
+    guide_anchor: "#resource-aws_instance"
+    suggested_diff: |2
+      -  cpu_core_count       = 2
+      -  cpu_threads_per_core = 1
+      +  cpu_options {
+      +    core_count       = 2
+      +    threads_per_core = 1
+      +  }
+  - id: aws6-instance-user-data-plaintext
+    kind: retyped
+    severity: warning
+    match:
+      block_kind: resource
+      type: aws_instance
+      attributes: [user_data]
+    title: "`aws_instance`: `user_data` is stored in clear text"
+    detail: >-
+      Hashing was dropped, so the value is visible in plan output and state.
+      Move anything sensitive out of user data; use `user_data_base64` for
+      pre-encoded payloads.
+    guide_anchor: "#resource-aws_instance"
+  - id: aws6-launch-template-elastic
+    kind: removed
+    severity: breaking
+    match:
+      block_kind: resource
+      type: aws_launch_template
+      attributes: [elastic_gpu_specifications, elastic_inference_accelerator]
+    title: "`aws_launch_template`: elastic GPU / inference blocks removed"
+    detail: Elastic Graphics ended January 2024 and Elastic Inference April 2024.
+    guide_anchor: "#resource-aws_launch_template"
+  - id: aws6-lb-listener-mutual-authentication
+    kind: retyped
+    severity: warning
+    match:
+      block_kind: resource
+      type: aws_lb_listener
+      attributes: [mutual_authentication]
+    title: "`aws_lb_listener`: `mutual_authentication` arguments now depend on `mode`"
+    detail: >-
+      `advertise_trust_store_ca_names`, `ignore_client_certificate_expiry` and
+      `trust_store_arn` may only be set when `mode = "verify"`, and
+      `trust_store_arn` is required in that mode.
+    guide_anchor: "#resource-aws_lb_listener"
+  - id: aws6-networkmanager-core-network-base-policy-region
+    kind: removed
+    severity: breaking
+    match:
+      block_kind: resource
+      type: aws_networkmanager_core_network
+      attributes: [base_policy_region]
+    title: "`aws_networkmanager_core_network`: `base_policy_region` removed"
+    detail: Use `base_policy_regions` (a set).
+    guide_anchor: "#resource-aws_networkmanager_core_network"
+    suggested_diff: |2
+      -  base_policy_region  = "eu-central-1"
+      +  base_policy_regions = ["eu-central-1"]
+  - id: aws6-opensearch-domain-kibana-endpoint
+    kind: removed
+    severity: warning
+    match: {block_kind: resource, type: aws_opensearch_domain}
+    title: "`aws_opensearch_domain`: `kibana_endpoint` removed"
+    detail: >-
+      Check every reference to `kibana_endpoint`. OpenSearch Dashboards live at
+      `/_dashboards/` on the domain endpoint.
+    guide_anchor: "#resource-aws_opensearch_domain"
+  - id: aws6-opensearchserverless-security-config-retyped
+    kind: retyped
+    severity: warning
+    match: {block_kind: resource, type: aws_opensearchserverless_security_config}
+    title: "`aws_opensearchserverless_security_config`: `saml_options` is now a list of blocks"
+    detail: References need an index, e.g. `saml_options[0].session_timeout`.
+    guide_anchor: "#resource-aws_opensearchserverless_security_config"
+  - id: aws6-paymentcryptography-key-retyped
+    kind: retyped
+    severity: warning
+    match: {block_kind: resource, type: aws_paymentcryptography_key}
+    title: "`aws_paymentcryptography_key`: `key_attributes` is now a list of blocks"
+    detail: >-
+      References need an index, e.g. `key_attributes.key_modes_of_use.decrypt`
+      becomes `key_attributes[0].key_modes_of_use[0].decrypt`.
+    guide_anchor: "#resource-aws_paymentcryptography_key"
+  - id: aws6-redshift-cluster-computed-only
+    kind: retyped
+    severity: breaking
+    match:
+      block_kind: resource
+      type: aws_redshift_cluster
+      attributes: [cluster_public_key, cluster_revision_number, endpoint]
+    title: "`aws_redshift_cluster`: `cluster_public_key`, `cluster_revision_number` and `endpoint` are read-only"
+    detail: Remove the assignments; setting them is now an error.
+    guide_anchor: "#resource-aws_redshift_cluster"
+  - id: aws6-redshift-cluster-encrypted-default
+    kind: default-changed
+    severity: warning
+    match:
+      block_kind: resource
+      type: aws_redshift_cluster
+      attributes: [encrypted]
+      absent: true
+    title: "`aws_redshift_cluster`: `encrypted` now defaults to `true`"
+    detail: >-
+      An unencrypted cluster created under 5.x will show a diff. Set the value
+      explicitly to state your intent.
+    guide_anchor: "#resource-aws_redshift_cluster"
+    suggested_diff: |2
+      +  encrypted = true
+  - id: aws6-redshift-cluster-publicly-accessible-default
+    kind: default-changed
+    severity: warning
+    match:
+      block_kind: resource
+      type: aws_redshift_cluster
+      attributes: [publicly_accessible]
+      absent: true
+    title: "`aws_redshift_cluster`: `publicly_accessible` now defaults to `false`"
+    detail: A publicly accessible cluster created under 5.x will show a diff. Set the value explicitly.
+    guide_anchor: "#resource-aws_redshift_cluster"
+    suggested_diff: |2
+      +  publicly_accessible = false
+  - id: aws6-redshift-cluster-logging
+    kind: removed
+    severity: breaking
+    match:
+      block_kind: resource
+      type: aws_redshift_cluster
+      attributes: [logging]
+    title: "`aws_redshift_cluster`: `logging` removed"
+    detail: Use the `aws_redshift_logging` resource.
+    guide_anchor: "#resource-aws_redshift_cluster"
+  - id: aws6-redshift-cluster-snapshot-copy
+    kind: removed
+    severity: breaking
+    match:
+      block_kind: resource
+      type: aws_redshift_cluster
+      attributes: [snapshot_copy]
+    title: "`aws_redshift_cluster`: `snapshot_copy` removed"
+    detail: Use the `aws_redshift_snapshot_copy` resource.
+    guide_anchor: "#resource-aws_redshift_cluster"
+  - id: aws6-rekognition-stream-processor-retyped
+    kind: retyped
+    severity: warning
+    match: {block_kind: resource, type: aws_rekognition_stream_processor}
+    title: "`aws_rekognition_stream_processor`: `regions_of_interest.bounding_box` is now a list of blocks"
+    detail: References need an index, e.g. `regions_of_interest[0].bounding_box[0].height`.
+    guide_anchor: "#resource-aws_rekognition_stream_processor"
+  - id: aws6-resiliencehub-resiliency-policy-retyped
+    kind: retyped
+    severity: warning
+    match: {block_kind: resource, type: aws_resiliencehub_resiliency_policy}
+    title: "`aws_resiliencehub_resiliency_policy`: `policy` is now a list of blocks"
+    detail: References need an index, e.g. `policy.az.rpo` becomes `policy[0].az[0].rpo`.
+    guide_anchor: "#resource-aws_resiliencehub_resiliency_policy"
+  - id: aws6-s3-bucket-region
+    kind: renamed
+    severity: warning
+    match: {block_kind: resource, type: aws_s3_bucket}
+    title: "`aws_s3_bucket`: read the bucket's region from `bucket_region`"
+    detail: >-
+      `region` is now the provider region meta-argument. References that wanted
+      the bucket's own region must use `bucket_region`.
+    guide_anchor: "#resource-aws_s3_bucket"
+  - id: aws6-sagemaker-image-version-id
+    kind: state-move
+    severity: info
+    match: {block_kind: resource, type: aws_sagemaker_image_version}
+    title: "`aws_sagemaker_image_version`: composite `id` is now comma-delimited"
+    detail: "`image_name,version`. Reference the image name through `image_name`."
+    guide_anchor: "#resource-aws_sagemaker_image_version"
+  - id: aws6-sagemaker-notebook-instance-accelerator-types
+    kind: removed
+    severity: breaking
+    match:
+      block_kind: resource
+      type: aws_sagemaker_notebook_instance
+      attributes: [accelerator_types]
+    title: "`aws_sagemaker_notebook_instance`: `accelerator_types` removed"
+    detail: Use an Inferentia `instance_type` instead.
+    guide_anchor: "#resource-aws_sagemaker_notebook_instance"
+  - id: aws6-servicequotas-template-region
+    kind: renamed
+    severity: warning
+    match:
+      block_kind: resource
+      type: aws_servicequotas_template
+      attributes: [region]
+    title: "`aws_servicequotas_template`: `region` deprecated, use `aws_region`"
+    guide_anchor: "#resource-aws_servicequotas_template"
+    suggested_diff: |2
+      -  region     = "eu-central-1"
+      +  aws_region = "eu-central-1"
+  - id: aws6-spot-instance-request-block-duration-minutes
+    kind: removed
+    severity: breaking
+    match:
+      block_kind: resource
+      type: aws_spot_instance_request
+      attributes: [block_duration_minutes]
+    title: "`aws_spot_instance_request`: `block_duration_minutes` removed"
+    detail: Spot blocks are no longer offered by EC2. Delete the argument.
+    guide_anchor: "#resource-aws_spot_instance_request"
+  - id: aws6-ssm-association-instance-id
+    kind: removed
+    severity: breaking
+    match:
+      block_kind: resource
+      type: aws_ssm_association
+      attributes: [instance_id]
+    title: "`aws_ssm_association`: `instance_id` removed"
+    detail: Use a `targets` block.
+    guide_anchor: "#resource-aws_ssm_association"
+    suggested_diff: |2
+      -  instance_id = aws_instance.example.id
+      +  targets {
+      +    key    = "InstanceIds"
+      +    values = [aws_instance.example.id]
+      +  }
+  - id: aws6-ssmincidents-replication-set-region
+    kind: renamed
+    severity: warning
+    match:
+      block_kind: resource
+      type: aws_ssmincidents_replication_set
+      attributes: [region]
+    title: "`aws_ssmincidents_replication_set`: `region` deprecated, use `regions`"
+    guide_anchor: "#resource-aws_ssmincidents_replication_set"
+  - id: aws6-verifiedpermissions-schema-retyped
+    kind: retyped
+    severity: warning
+    match: {block_kind: resource, type: aws_verifiedpermissions_schema}
+    title: "`aws_verifiedpermissions_schema`: `definition` is now a list of blocks"
+    detail: References need an index, e.g. `definition.value` becomes `definition[0].value`.
+    guide_anchor: "#resource-aws_verifiedpermissions_schema"
+  - id: aws6-wafv2-web-acl-bot-control-ml-default
+    kind: default-changed
+    severity: warning
+    match:
+      block_kind: resource
+      type: aws_wafv2_web_acl
+      attributes:
+        - rule.statement.managed_rule_group_statement.managed_rule_group_configs.aws_managed_rules_bot_control_rule_set
+    title: "`aws_wafv2_web_acl`: Bot Control `enable_machine_learning` now defaults to `false`"
+    detail: Set it to `true` explicitly to keep the 5.x behaviour.
+    guide_anchor: "#resource-aws_wafv2_web_acl"
+    suggested_diff: |2
+         aws_managed_rules_bot_control_rule_set {
+      +    enable_machine_learning = true
+         }
