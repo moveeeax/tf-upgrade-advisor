@@ -1,18 +1,29 @@
+# Monthly, with patch and minor updates grouped into one PR each; majors
+# come one per PR. Patch PRs merge themselves once CI passes
+# (dependabot-auto-merge.yml).
 version: 2
+
 updates:
   - package-ecosystem: gomod
     directory: /
     schedule:
-      interval: weekly
+      interval: monthly
     commit-message:
       prefix: "chore(deps)"
+    groups:
+      patch:
+        update-types: [patch]
+      minor:
+        update-types: [minor]
 
-  # Keeps the pinned action versions in ci.yml and action.yml current; a stale
-  # actions/setup-go is exactly the kind of drift consumers of a composite
-  # action inherit silently.
   - package-ecosystem: github-actions
     directory: /
     schedule:
-      interval: weekly
+      interval: monthly
     commit-message:
       prefix: "chore(ci)"
+    groups:
+      patch:
+        update-types: [patch]
+      minor:
+        update-types: [minor]
