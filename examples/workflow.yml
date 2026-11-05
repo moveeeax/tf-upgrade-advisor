@@ -16,10 +16,10 @@ jobs:
   advise:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - id: advisor
-        uses: moveeeax/tf-upgrade-advisor@v0
+        uses: moveeeax/tf-upgrade-advisor@v0.1.0
         with:
           provider: aws
           from: 5
