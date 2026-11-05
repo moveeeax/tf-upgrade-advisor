@@ -167,3 +167,7 @@ make test     # go test -race ./...
 make lint     # gofmt -l . && go vet ./...
 make demo     # runs the README example against testdata/aws5
 ```
+
+## License
+
+MIT. See [LICENSE](LICENSE).
