@@ -33,7 +33,7 @@ cd tf-upgrade-advisor
 make build
 ```
 
-Go 1.22 or newer. The rule corpus is embedded in the binary.
+Go 1.26 or newer. The rule corpus is embedded in the binary.
 
 ## Usage
 
@@ -107,7 +107,7 @@ Every rule carries the anchor of the guide section it was transcribed from, and 
 ## In CI
 
 ```yaml
-- uses: moveeeax/tf-upgrade-advisor@v0
+- uses: moveeeax/tf-upgrade-advisor@v0.1.0
   with:
     provider: aws
     from: 5
