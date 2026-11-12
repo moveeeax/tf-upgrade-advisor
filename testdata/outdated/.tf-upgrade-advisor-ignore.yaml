@@ -1,0 +1,6 @@
+ignore:
+  - source: terraform-aws-modules/s3-bucket/aws
+    constraint: "4.1.0"
+    reason: 5.x drops the bucket ACL inputs the data stack still sets.
+  - source: registry.terraform.io/hashicorp/null
+    reason: Left over from a removed stack.

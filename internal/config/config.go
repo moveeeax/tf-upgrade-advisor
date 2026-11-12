@@ -9,6 +9,7 @@ package config
 
 import (
 	"fmt"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"sort"
@@ -62,12 +63,25 @@ type ProviderRequirement struct {
 	Line       int    `json:"line"`
 }
 
+// ModuleCall is one `module` block. Version is the literal `version` argument,
+// empty when unset or not a literal; Line points at that argument when present
+// and at the block otherwise, since that is the line an upgrade edits.
+type ModuleCall struct {
+	Name    string `json:"name"`
+	Source  string `json:"source"`
+	Version string `json:"version,omitempty"`
+	File    string `json:"file"`
+	Line    int    `json:"line"`
+}
+
 // Config is everything the walker found across the root directory and every
 // local module reachable from it.
 type Config struct {
 	Root         string
 	Usages       []Usage
 	Requirements []ProviderRequirement
+	// Modules is every `module` block with a literal source, local or remote.
+	Modules []ModuleCall
 	// Dirs is every directory that was parsed, root first, in visit order.
 	Dirs []string
 	// SkippedModules lists `module` sources that were not followed (registry,
@@ -109,6 +123,7 @@ func Load(dir string) (*Config, error) {
 		cfg.Dirs = append(cfg.Dirs, cur)
 		cfg.Usages = append(cfg.Usages, local.usages...)
 		cfg.Requirements = append(cfg.Requirements, local.requirements...)
+		cfg.Modules = append(cfg.Modules, local.modules...)
 		cfg.SkippedModules = append(cfg.SkippedModules, local.skipped...)
 		for _, rel := range local.localModules {
 			queue = append(queue, filepath.Clean(filepath.Join(cur, rel)))
@@ -119,9 +134,58 @@ func Load(dir string) (*Config, error) {
 	return cfg, nil
 }
 
+// LoadTree parses every directory under root that holds *.tf files, not just
+// the ones reachable through `module` blocks. A repository with several stacks
+// side by side is inventoried in one pass. Hidden directories (`.terraform`,
+// `.git`) are skipped: what they hold is downloaded, not written.
+func LoadTree(root string) (*Config, error) {
+	abs, err := filepath.Abs(root)
+	if err != nil {
+		return nil, err
+	}
+	info, err := os.Stat(abs)
+	if err != nil {
+		return nil, err
+	}
+	if !info.IsDir() {
+		return nil, fmt.Errorf("%s: not a directory", root)
+	}
+
+	cfg := &Config{Root: abs}
+	err = filepath.WalkDir(abs, func(path string, d fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+		if !d.IsDir() {
+			return nil
+		}
+		if path != abs && strings.HasPrefix(d.Name(), ".") {
+			return filepath.SkipDir
+		}
+		local, err := loadDir(path)
+		if err != nil {
+			return err
+		}
+		if local.files == 0 {
+			return nil
+		}
+		cfg.Dirs = append(cfg.Dirs, path)
+		cfg.Usages = append(cfg.Usages, local.usages...)
+		cfg.Requirements = append(cfg.Requirements, local.requirements...)
+		cfg.Modules = append(cfg.Modules, local.modules...)
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	return cfg, nil
+}
+
 type dirResult struct {
+	files        int
 	usages       []Usage
 	requirements []ProviderRequirement
+	modules      []ModuleCall
 	localModules []string
 	skipped      []string
 }
@@ -143,6 +207,7 @@ func loadDir(dir string) (dirResult, error) {
 		files = append(files, filepath.Join(dir, e.Name()))
 	}
 	sort.Strings(files)
+	res.files = len(files)
 
 	parser := hclparse.NewParser()
 	for _, f := range files {
@@ -203,6 +268,17 @@ func collect(body *hclsyntax.Body, res *dirResult) {
 			if !ok {
 				continue
 			}
+			call := ModuleCall{
+				Name:   firstLabel(b),
+				Source: source,
+				File:   b.TypeRange.Filename,
+				Line:   b.TypeRange.Start.Line,
+			}
+			if v, ok := stringAttr(b.Body, "version"); ok {
+				call.Version = v
+				call.Line = b.Body.Attributes["version"].SrcRange.Start.Line
+			}
+			res.modules = append(res.modules, call)
 			if isLocalSource(source) {
 				res.localModules = append(res.localModules, source)
 			} else {
@@ -349,6 +425,13 @@ func stringAttr(body *hclsyntax.Body, name string) (string, bool) {
 // which is the only kind v1 follows.
 func isLocalSource(source string) bool {
 	return strings.HasPrefix(source, "./") || strings.HasPrefix(source, "../")
+}
+
+func firstLabel(b *hclsyntax.Block) string {
+	if len(b.Labels) == 0 {
+		return ""
+	}
+	return b.Labels[0]
 }
 
 func join(prefix, name string) string {
