@@ -5,11 +5,13 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/spf13/cobra"
 
 	"github.com/moveeeax/tf-upgrade-advisor/internal/config"
+	"github.com/moveeeax/tf-upgrade-advisor/internal/outdated"
 	"github.com/moveeeax/tf-upgrade-advisor/internal/report"
 	"github.com/moveeeax/tf-upgrade-advisor/internal/rules"
 	"github.com/moveeeax/tf-upgrade-advisor/internal/scan"
@@ -37,8 +39,9 @@ func Run(args []string, stdout, stderr io.Writer) (int, error) {
 		Short: "Turn a Terraform provider upgrade guide into a checklist for your code",
 		Long: "tf-upgrade-advisor intersects a provider's published breaking-change list with\n" +
 			"the HCL you actually wrote, so a major upgrade becomes a short checklist\n" +
-			"instead of a long changelog. It parses only: no state, no credentials, no\n" +
-			"network, no model in the analysis path.",
+			"instead of a long changelog. scan parses only: no state, no credentials, no\n" +
+			"network, no model in the analysis path. outdated reads the Terraform\n" +
+			"Registry's version lists to find pins that have fallen behind.",
 		Version:       Version,
 		SilenceUsage:  true,
 		SilenceErrors: true,
@@ -46,7 +49,7 @@ func Run(args []string, stdout, stderr io.Writer) (int, error) {
 	root.SetOut(stdout)
 	root.SetErr(stderr)
 	root.SetArgs(args)
-	root.AddCommand(scanCmd(&code), rulesCmd())
+	root.AddCommand(scanCmd(&code), rulesCmd(), outdatedCmd(&code))
 
 	if err := root.Execute(); err != nil {
 		return exitError, err
@@ -129,6 +132,149 @@ func scanCmd(code *int) *cobra.Command {
 		"lowest severity that exits 1: breaking, warning, info or never")
 	_ = cmd.MarkFlagRequired("from")
 	_ = cmd.MarkFlagRequired("to")
+	return cmd
+}
+
+func outdatedCmd(code *int) *cobra.Command {
+	var (
+		maxBehind  string
+		format     string
+		output     string
+		ignoreFile string
+		registry   string
+		fail       bool
+		openIssue  bool
+		labels     []string
+		issueTitle string
+		repo       string
+	)
+
+	cmd := &cobra.Command{
+		Use:   "outdated [dir]",
+		Short: "List module and provider pins that are behind, deprecated or yanked in the registry",
+		Long: "outdated walks every directory under [dir] that holds *.tf files, collects each\n" +
+			"registry module `version` and `required_providers` constraint, and compares the\n" +
+			"version it resolves to with the newest release on the Terraform Registry.\n" +
+			"Unlike scan, it needs network access to the registry.",
+		Example: "  tf-upgrade-advisor outdated --max-behind minor .\n" +
+			"  tf-upgrade-advisor outdated --open-issue --label tech-debt .",
+		Args: cobra.MaximumNArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			dir := "."
+			if len(args) == 1 {
+				dir = args[0]
+			}
+			limit, err := outdated.ParseDistance(maxBehind)
+			if err != nil {
+				return fmt.Errorf("--max-behind: %w", err)
+			}
+			switch format {
+			case "markdown", "text", "json":
+			default:
+				return fmt.Errorf("unknown --format %q (want markdown, text or json)", format)
+			}
+			var gh *outdated.GitHub
+			if openIssue {
+				if repo == "" {
+					repo = os.Getenv("GITHUB_REPOSITORY")
+				}
+				if repo == "" {
+					return fmt.Errorf("--open-issue needs --github-repo or $GITHUB_REPOSITORY")
+				}
+				token := os.Getenv("GITHUB_TOKEN")
+				if token == "" {
+					token = os.Getenv("GH_TOKEN")
+				}
+				if token == "" {
+					return fmt.Errorf("--open-issue needs $GITHUB_TOKEN or $GH_TOKEN")
+				}
+				gh = outdated.NewGitHub(os.Getenv("GITHUB_API_URL"), token, repo)
+			}
+
+			cfg, err := config.LoadTree(dir)
+			if err != nil {
+				return err
+			}
+			explicit := ignoreFile != ""
+			if !explicit {
+				ignoreFile = filepath.Join(cfg.Root, outdated.DefaultIgnoreFile)
+			}
+			ignores, err := outdated.LoadIgnores(ignoreFile, explicit)
+			if err != nil {
+				return err
+			}
+			res, err := outdated.Check(cmd.Context(), cfg, outdated.NewRegistry(registry),
+				outdated.Options{MaxBehind: limit, Ignores: ignores})
+			if err != nil {
+				return err
+			}
+
+			markdown := report.OutdatedMarkdown(res)
+			var rendered string
+			switch format {
+			case "markdown":
+				rendered = markdown
+			case "text":
+				rendered = report.OutdatedText(res)
+			case "json":
+				var b strings.Builder
+				if err := report.OutdatedJSON(&b, res); err != nil {
+					return err
+				}
+				rendered = b.String()
+			}
+			if _, err := io.WriteString(cmd.OutOrStdout(), rendered); err != nil {
+				return err
+			}
+			if output != "" {
+				if err := os.WriteFile(output, []byte(rendered), 0o644); err != nil {
+					return fmt.Errorf("write %s: %w", output, err)
+				}
+			}
+			if format == "markdown" {
+				if err := appendStepSummary(rendered); err != nil {
+					fmt.Fprintf(cmd.ErrOrStderr(), "tf-upgrade-advisor: %v\n", err)
+				}
+			}
+
+			pending := len(res.OverLimit())
+			outputs := fmt.Sprintf("needs-upgrade=%d\n", pending)
+			if gh != nil {
+				action, issue, err := gh.SyncIssue(cmd.Context(), issueTitle, markdown, labels, pending > 0)
+				if err != nil {
+					return err
+				}
+				if issue != nil {
+					fmt.Fprintf(cmd.ErrOrStderr(), "tf-upgrade-advisor: issue #%d %s: %s\n",
+						issue.Number, action, issue.HTMLURL)
+					outputs += fmt.Sprintf("issue-number=%d\nissue-url=%s\n", issue.Number, issue.HTMLURL)
+				}
+			}
+			if err := appendEnvFile("GITHUB_OUTPUT", outputs); err != nil {
+				fmt.Fprintf(cmd.ErrOrStderr(), "tf-upgrade-advisor: %v\n", err)
+			}
+
+			if fail && pending > 0 {
+				*code = exitFindings
+			}
+			return nil
+		},
+	}
+
+	cmd.Flags().StringVar(&maxBehind, "max-behind", "minor",
+		"largest distance behind latest that is accepted: none, patch, minor or major")
+	cmd.Flags().StringVar(&format, "format", "markdown", "output format: markdown, text or json")
+	cmd.Flags().StringVar(&output, "output", "", "also write the report to this file")
+	cmd.Flags().StringVar(&ignoreFile, "ignore-file", "",
+		"ignore rules (default: "+outdated.DefaultIgnoreFile+" in [dir], when present)")
+	cmd.Flags().StringVar(&registry, "registry", outdated.DefaultRegistry, "Terraform Registry base URL")
+	cmd.Flags().BoolVar(&fail, "fail", true, "exit 1 when anything needs an upgrade")
+	cmd.Flags().BoolVar(&openIssue, "open-issue", false,
+		"open one GitHub issue with the list, or edit the one opened earlier; close it when nothing is left")
+	cmd.Flags().StringArrayVar(&labels, "label", nil, "label for a newly opened issue (repeatable)")
+	cmd.Flags().StringVar(&issueTitle, "issue-title", "Terraform module and provider upgrades",
+		"title for a newly opened issue")
+	cmd.Flags().StringVar(&repo, "github-repo", "", "owner/name for --open-issue (default: $GITHUB_REPOSITORY)")
 	return cmd
 }
 

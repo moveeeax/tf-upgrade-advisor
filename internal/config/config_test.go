@@ -188,3 +188,47 @@ func paths(u Usage) []string {
 	}
 	return out
 }
+
+func TestLoadRecordsModuleCalls(t *testing.T) {
+	cfg := load(t, "../../testdata/aws5")
+	var vpc *ModuleCall
+	for i := range cfg.Modules {
+		if cfg.Modules[i].Name == "vpc" {
+			vpc = &cfg.Modules[i]
+		}
+	}
+	if vpc == nil {
+		t.Fatalf("module vpc not recorded: %+v", cfg.Modules)
+	}
+	if vpc.Source != "terraform-aws-modules/vpc/aws" || vpc.Version != "5.8.1" {
+		t.Errorf("vpc = %+v", vpc)
+	}
+	// Anchored at the `version` argument, the line an upgrade edits.
+	if vpc.Line != 85 {
+		t.Errorf("vpc line = %d, want 85", vpc.Line)
+	}
+}
+
+func TestLoadTreeVisitsEveryStack(t *testing.T) {
+	cfg, err := LoadTree("../../testdata/outdated")
+	if err != nil {
+		t.Fatalf("LoadTree: %v", err)
+	}
+	var rel []string
+	for _, d := range cfg.Dirs {
+		r, _ := filepath.Rel(cfg.Root, d)
+		rel = append(rel, filepath.ToSlash(r))
+	}
+	want := []string{"modules/tags", "stacks/data", "stacks/network"}
+	if strings.Join(rel, ",") != strings.Join(want, ",") {
+		t.Errorf("Dirs = %v, want %v (no root without *.tf, no .terraform)", rel, want)
+	}
+	if len(cfg.Requirements) != 5 {
+		t.Errorf("Requirements = %d, want 5", len(cfg.Requirements))
+	}
+	for _, m := range cfg.Modules {
+		if strings.Contains(m.File, ".terraform") {
+			t.Errorf("module from .terraform: %+v", m)
+		}
+	}
+}

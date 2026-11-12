@@ -3,6 +3,7 @@ module github.com/moveeeax/tf-upgrade-advisor
 go 1.26.0
 
 require (
+	github.com/hashicorp/go-version v1.9.0
 	github.com/hashicorp/hcl/v2 v2.25.0
 	github.com/spf13/cobra v1.10.2
 	go.yaml.in/yaml/v3 v3.0.6

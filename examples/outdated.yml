@@ -1,0 +1,41 @@
+# Keep one upgrade issue for every module and provider pin in the repository.
+#
+# Drop this in .github/workflows/terraform-outdated.yml. The first run that
+# finds something opens the issue; later runs edit the same issue, and it is
+# closed once nothing is left. Pins held back on purpose go in
+# .tf-upgrade-advisor-ignore.yaml with a reason.
+name: terraform-outdated
+
+on:
+  schedule:
+    - cron: "17 6 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  outdated:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-go@v7
+        with:
+          go-version: stable
+
+      - name: Install tf-upgrade-advisor
+        run: go install github.com/moveeeax/tf-upgrade-advisor@latest
+
+      - name: Update the upgrade issue
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        # --fail=false: the issue is the signal, a red scheduled run adds nothing.
+        run: |
+          "$(go env GOPATH)/bin/tf-upgrade-advisor" outdated \
+            --max-behind minor \
+            --open-issue \
+            --label tech-debt \
+            --fail=false \
+            .

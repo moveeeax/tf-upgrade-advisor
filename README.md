@@ -6,6 +6,8 @@ The AWS provider v6 upgrade guide is roughly 90 sections long. Almost none of th
 
 No state file. No credentials. No network. No model anywhere in the analysis path — the same inputs always produce the same report, which is the point.
 
+A second command, `outdated`, answers the neighbouring question: which module and provider pins across the whole repository have fallen behind, been deprecated or been yanked on the Terraform Registry. It needs network access to the registry and can keep one grouped GitHub issue up to date instead of a stream of bump PRs. See [Outdated pins](#outdated-pins).
+
 ```console
 $ tf-upgrade-advisor scan --provider aws --from 5 --to 6 --format text ./infra
 aws 5 -> 6: 8 breaking, 5 warning, 1 info
@@ -118,6 +120,71 @@ Every rule carries the anchor of the guide section it was transcribed from, and 
 
 The checklist is appended to the job summary page. The step also sets `breaking`, `warning`, `info`, `total`, `has-breaking` and `report-file` as outputs. See [`examples/workflow.yml`](examples/workflow.yml).
 
+## Outdated pins
+
+```console
+$ tf-upgrade-advisor outdated --max-behind minor --format text .
+3 of 8 pinned versions need an upgrade (max behind: minor)
+
+stacks/data/main.tf:25: ignored: module terraform-aws-modules/s3-bucket/aws 4.1.0 (latest 5.17.0) resolves to 4.1.0, major behind
+stacks/network/main.tf:16: upgrade: module terraform-aws-modules/vpc/aws 5.8.1 (latest 6.7.3) resolves to 5.8.1, major behind
+stacks/network/main.tf:3: upgrade: provider hashicorp/aws ~> 5.40 (latest 6.73.0) resolves to 5.100.0, major behind
+stacks/network/main.tf:29: not checked: module git::https://example.com/modules/legacy.git?ref=v1.0.0: not a registry source
+...
+```
+
+`outdated` walks every directory under the target that holds `*.tf` files (hidden directories such as `.terraform` are skipped), so several stacks side by side are inventoried in one run. For each registry `module` with a `version` argument and each `required_providers` entry it asks the registry for the published versions, works out what the constraint resolves to today (what `terraform init -upgrade` would pick), and compares that with the newest stable release.
+
+A pin needs an upgrade when any of these holds:
+
+1. It resolves to a version further behind latest than `--max-behind` allows (`none`, `patch`, `minor` or `major`; default `minor`).
+2. The registry marks the resolved module version deprecated, or attaches a warning to the provider.
+3. The constraint matches no published version: the pinned release was yanked or never existed.
+
+Distance is the first release segment that differs: `5.8.1` against `6.0.0` is a major behind. Prereleases never count as latest unless a project has published nothing else. A module without a `version` argument resolves to latest and is reported as unpinned.
+
+Markdown output groups locations by source, so one module pinned in forty stacks is one checkbox. Local modules belong to the repository and are not listed; git, HTTP and S3 sources, private registry hosts and sources the registry does not know are listed under "not checked" with the reason. A registry error other than 404 stops the run with exit code 2: an outage is not a clean report.
+
+### Ignore rules
+
+Versions held back on purpose go in `.tf-upgrade-advisor-ignore.yaml` at the scanned root (or the file passed with `--ignore-file`). Every rule needs a reason; a rule without one, or with an unknown field, is an error.
+
+```yaml
+ignore:
+  - source: terraform-aws-modules/s3-bucket/aws   # module: namespace/name/system
+    constraint: "4.1.0"                           # optional: only while the pin reads exactly this
+    reason: 5.x drops the bucket ACL inputs the data stack still sets.
+  - source: hashicorp/aws                         # provider: namespace/type
+    reason: Blocked on the 6.x upgrade checklist, see INFRA-412.
+```
+
+Ignored pins stay in the report with their reason. Rules that matched nothing are listed so they can be deleted.
+
+### One grouped issue
+
+```console
+$ GITHUB_TOKEN=... tf-upgrade-advisor outdated --open-issue --label tech-debt --github-repo acme/infra .
+```
+
+With `--open-issue` the Markdown report becomes the body of a single issue. The issue carries a hidden marker; later runs find the open issue with that marker and edit its body in place, leaving title and labels to whoever triages it. When nothing needs an upgrade any more the issue is updated with the all-clear report and closed. `--label` and `--issue-title` apply when the issue is first opened. The token comes from `GITHUB_TOKEN` or `GH_TOKEN` and needs `issues: write`; `GITHUB_API_URL` is honoured for GitHub Enterprise Server. See [`examples/outdated.yml`](examples/outdated.yml) for a weekly schedule.
+
+| Flag | Default | Meaning |
+|------|---------|---------|
+| `--max-behind` | `minor` | Largest accepted distance behind latest: `none`, `patch`, `minor` or `major`. |
+| `--format` | `markdown` | `markdown`, `text` or `json`. |
+| `--output` | — | Also write the report to a file. |
+| `--ignore-file` | `.tf-upgrade-advisor-ignore.yaml` in the target | Ignore rules. An explicitly named file must exist. |
+| `--registry` | `https://registry.terraform.io` | Registry base URL, for a mirror that serves the same API. |
+| `--fail` | `true` | Exit 1 when anything needs an upgrade. `--fail=false` for report-only runs. |
+| `--open-issue` | `false` | Create or edit the grouped issue; close it when the list is empty. |
+| `--label` | — | Label for a newly opened issue. Repeatable. |
+| `--issue-title` | `Terraform module and provider upgrades` | Title for a newly opened issue. |
+| `--github-repo` | `$GITHUB_REPOSITORY` | `owner/name` for `--open-issue`. |
+
+Inside GitHub Actions the Markdown report is appended to the job summary and `needs-upgrade`, `issue-number` and `issue-url` are written to `$GITHUB_OUTPUT`.
+
+Not covered: end-of-life dates (the registry publishes none, so "far behind" is the signal), private registry hosts, git tag sources and OpenTofu's registry.
+
 ## How it works
 
 1. **Parse.** Every `*.tf` file in the target directory is parsed with `hclsyntax`. `resource`, `data` and `provider` blocks are recorded along with the flattened set of attribute paths actually set inside them — `logs.audit`, `block_device_mappings.ebs.encrypted`, and so on. A `dynamic` block is flattened to the block type it generates, so `dynamic "ebs_block_device"` matches the same rules as the static form.
@@ -158,7 +225,7 @@ Worth knowing before you rely on it:
 - **No `.tf.json`**, no Terragrunt, no CDKTF, no private registry modules.
 - **The corpus is hand-maintained.** It reflects the published guides at the time it was written; a provider release does not update it automatically.
 
-Terraform core and module version upgrades are explicitly out of scope. This is about providers.
+Terraform core upgrades are out of scope. `scan` is about provider breaking changes; module and provider version drift is what `outdated` reports.
 
 ## Development
 

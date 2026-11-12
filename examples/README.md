@@ -3,6 +3,8 @@
 | File | What it shows |
 |------|---------------|
 | [`workflow.yml`](workflow.yml) | Gating a pull request on the AWS 5 → 6 checklist with the composite action. |
+| [`outdated.yml`](outdated.yml) | A weekly run that keeps one grouped upgrade issue for module and provider pins. |
+| [`../testdata/outdated`](../testdata/outdated) | Two stacks with registry, git and private-registry pins plus an ignore file, used by the `outdated` tests. |
 | [`../testdata/aws5`](../testdata/aws5) | A small 5.x configuration with a local module, used by the tests and by the README example. |
 | [`../testdata/clean`](../testdata/clean) | The same shapes after the upgrade, so you can see a clean report. |
 
